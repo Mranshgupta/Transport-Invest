@@ -1273,7 +1273,7 @@
                     this.triggerToast(`Level ${lvl}: Currently ${count} members in your network.`);
                 },
 
-                openPaymentGateway() {
+               openPaymentGateway() {
     let amount = Number(this.rechargeAmount);
     if(!amount || amount < 500) {
         this.triggerToast('Minimum recharge is ₹500');
@@ -1298,27 +1298,7 @@
         let finalGatewayUrl = `https://api.wataiglobal.com/pay/web?${queryParams.toString()}`;
         window.location.href = finalGatewayUrl;
     }, 800);
-                }
-
-    let orderId = 'ORD_' + Date.now() + '_' + Math.floor(Math.random() * 1000);
-    let callbackUrl = window.location.href;
-
-    this.triggerToast('Redirecting to Payment Gateway...');
-
-    setTimeout(() => {
-        let queryParams = new URLSearchParams({
-            merchant_id: "100225399",
-            amount: amount,
-            order_id: orderId,
-            customer_phone: this.user.phone,
-            key: "a707d50a0lcd45fdbb60a71b0c69f15a",
-            redirect_url: callbackUrl
-        });
-
-        let finalGatewayUrl = `https://api.wataiglobal.com/pay/web?${queryParams.toString()}`;
-        window.location.href = finalGatewayUrl;
-    }, 800);
-                }
+               }
 
                 confirmPaymentSuccess() {
                     let amount = Number(this.rechargeAmount);
