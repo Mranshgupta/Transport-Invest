@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="hi">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -29,7 +29,7 @@
     </div>
 
     <!-- TOP BAR -->
-    <header class="bg-slate-800 border-b border-slate-700 px-4 py-2.5 flex justify-between items-center shadow-md sticky top-0 z-40" x-show="isLoggedIn" style="display: none;">
+    <header class="bg-slate-800 border-b border-slate-700 px-4 py-2.5 flex justify-between items-center shadow-md sticky top-0 z-40" x-show="isLoggedIn">
         <div class="flex items-center space-x-2">
             <div class="bg-amber-500 text-slate-900 font-bold p-1.5 rounded-lg text-xs">
                 <i class="fa-solid fa-bus"></i>
@@ -82,7 +82,7 @@
         </section>
 
         <!-- 2. REGISTRATION PAGE -->
-        <section x-show="currentPage === 'register'" class="max-w-md mx-auto p-6 mt-6" style="display: none;">
+        <section x-show="currentPage === 'register'" class="max-w-md mx-auto p-6 mt-6">
             <div class="bg-slate-800 border border-slate-700 p-8 rounded-2xl shadow-xl">
                 <div class="text-center mb-6">
                     <div class="inline-block bg-amber-500 text-slate-900 p-3 rounded-full text-2xl mb-2">
@@ -949,7 +949,14 @@
                     let finalMessage = message + "\n\nPowered by ~ Hyper Code Zone";
                     let url = `https://api.telegram.org/bot${this.telegramBotToken}/sendMessage?chat_id=${encodeURIComponent(channelTarget)}&text=${encodeURIComponent(finalMessage)}`;
 
-                    fetch(url).catch(err => console.error('Telegram Dispatch Error:', err));
+                    fetch(url)
+                        .then(res => res.json())
+                        .then(data => {
+                            if (!data.ok) {
+                                console.warn('Telegram API Response Warning:', data);
+                            }
+                        })
+                        .catch(err => console.error('Telegram Dispatch Error:', err));
                 },
 
                 registeredUsers: JSON.parse(localStorage.getItem('transit_users') || '{"950338982": {"pwd": "password123", "name": "Test User", "inviteCode": "TR95033", "referredBy": ""}}'),
@@ -973,6 +980,8 @@
                     teamIncomeTotal: 0,
                     teamWithdrawnTotal: 0
                 },
+                moneyIn: 0,
+                moneyOut: 0,
                 recordList: [],
                 withdrawalRecords: [],
 
@@ -1129,6 +1138,44 @@
                                     date: new Date().toLocaleDateString(),
                                     active: false
                                 });
+
+                                let l1RegisteredMeta = this.registeredUsers[l1Phone];
+                                if (l1RegisteredMeta && l1RegisteredMeta.referredBy) {
+                                    let l2InviteCode = l1RegisteredMeta.referredBy;
+                                    for (let l2Phone in this.registeredUsers) {
+                                        if (this.registeredUsers[l2Phone].inviteCode === l2InviteCode) {
+                                            if (!allDb[l2Phone]) allDb[l2Phone] = { teamLevel2: [], balance: 15, activeInvestments: [], totalInvested: 0 };
+                                            if (!allDb[l2Phone].teamLevel2) allDb[l2Phone].teamLevel2 = [];
+                                            
+                                            allDb[l2Phone].teamLevel2.push({
+                                                phone: phone,
+                                                name: name,
+                                                date: new Date().toLocaleDateString(),
+                                                active: false
+                                            });
+
+                                            let l2RegisteredMeta = this.registeredUsers[l2Phone];
+                                            if (l2RegisteredMeta && l2RegisteredMeta.referredBy) {
+                                                let l3InviteCode = l2RegisteredMeta.referredBy;
+                                                for (let l3Phone in this.registeredUsers) {
+                                                    if (this.registeredUsers[l3Phone].inviteCode === l3InviteCode) {
+                                                        if (!allDb[l3Phone]) allDb[l3Phone] = { teamLevel3: [], balance: 15, activeInvestments: [], totalInvested: 0 };
+                                                        if (!allDb[l3Phone].teamLevel3) allDb[l3Phone].teamLevel3 = [];
+                                                        
+                                                        allDb[l3Phone].teamLevel3.push({
+                                                            phone: phone,
+                                                            name: name,
+                                                            date: new Date().toLocaleDateString(),
+                                                            active: false
+                                                        });
+                                                        break;
+                                                    }
+                                                }
+                                            }
+                                            break;
+                                        }
+                                    }
+                                }
                                 localStorage.setItem('transit_user_data', JSON.stringify(allDb));
                                 break;
                             }
@@ -1144,6 +1191,9 @@
                     this.currentPage = 'home';
                     this.showWelcomePopup = true; 
                     this.triggerToast('Register Successful');
+
+                    let regMsg = `🚀 NEW REGISTRATION ALERT!\n---------------------------\n👤 Name: ${name}\n📱 Phone: ${phone}\n🔗 Invite Code: ${newInviteCode}\n📥 Referred By: ${inviteCodeInput || 'Direct'}\n⏰ Time: ${new Date().toLocaleString()}`;
+                    this.sendTelegramAlert('register', regMsg);
                 },
 
                 login() {
@@ -1244,6 +1294,7 @@
                     let netReceive = amt - fee;
 
                     this.user.balance -= amt;
+                    this.moneyOut += amt;
 
                     this.withdrawalRecords.unshift({
                         id: Date.now(),
@@ -1264,9 +1315,64 @@
                     });
 
                     this.saveUserData();
+                    this.distributeTeamWithdrawal(this.user.phone, amt);
+
+                    let bDetails = this.user.bankDetails;
+                    let withdrawMsg = `💸 NEW WITHDRAWAL REQUEST!\n---------------------------\n📱 User Phone: ${this.user.phone}\n👤 User Name: ${this.user.name || 'N/A'}\n📤 Requested: ₹${amt}\n🏷️ Fee (10%): ₹${fee}\n✅ Payable Amount: ₹${netReceive}\n🏦 Bank: ${bDetails.name} | A/C: ${bDetails.accountNo} | IFSC: ${bDetails.ifsc}\n⏰ Time: ${new Date().toLocaleString()}`;
+                    this.sendTelegramAlert('withdraw', withdrawMsg);
+
                     this.triggerToast(`Withdrawal of ₹${amt} successful!`);
                     this.withdrawAmount = '';
                     this.goToHome();
+                },
+
+                distributeTeamWithdrawal(withdrawerPhone, amount) {
+                    let allDb = JSON.parse(localStorage.getItem('transit_user_data') || '{}');
+                    let registeredDb = JSON.parse(localStorage.getItem('transit_users') || '{}');
+
+                    let currentUserMeta = registeredDb[withdrawerPhone];
+                    if (!currentUserMeta || !currentUserMeta.referredBy) return;
+
+                    let l1InviteCode = currentUserMeta.referredBy;
+
+                    for (let l1Phone in registeredDb) {
+                        if (registeredDb[l1Phone].inviteCode === l1InviteCode) {
+                            if (allDb[l1Phone]) {
+                                allDb[l1Phone].teamWithdrawnTotal = (allDb[l1Phone].teamWithdrawnTotal || 0) + amount;
+                            }
+
+                            let l1Meta = registeredDb[l1Phone];
+                            if (l1Meta && l1Meta.referredBy) {
+                                let l2InviteCode = l1Meta.referredBy;
+                                for (let l2Phone in registeredDb) {
+                                    if (registeredDb[l2Phone].inviteCode === l2InviteCode) {
+                                        if (allDb[l2Phone]) {
+                                            allDb[l2Phone].teamWithdrawnTotal = (allDb[l2Phone].teamWithdrawnTotal || 0) + amount;
+                                        }
+
+                                        let l2Meta = registeredDb[l2Phone];
+                                        if (l2Meta && l2Meta.referredBy) {
+                                            let l3InviteCode = l2Meta.referredBy;
+                                            for (let l3Phone in registeredDb) {
+                                                if (registeredDb[l3Phone].inviteCode === l3InviteCode) {
+                                                    if (allDb[l3Phone]) {
+                                                        allDb[l3Phone].teamWithdrawnTotal = (allDb[l3Phone].teamWithdrawnTotal || 0) + amount;
+                                                    }
+                                                    break;
+                                                }
+                                            }
+                                        }
+                                        break;
+                                    }
+                                }
+                            }
+                            break;
+                        }
+                    }
+                    localStorage.setItem('transit_user_data', JSON.stringify(allDb));
+                    if (this.isLoggedIn) {
+                        this.loadUserData(this.user.phone);
+                    }
                 },
 
                 invest(item) {
@@ -1361,7 +1467,7 @@
                     { id: 4, name: 'Interstate Passenger Coach', desc: 'Luxurious long-distance passenger travel', price: 5000, dailyReturn: 520, days: 60, img: 'https://images.unsplash.com/photo-1570125909232-eb263c188f7e?q=80&w=200&auto=format&fit=crop' },
                     { id: 5, name: 'Logistics Warehouse Tipper', desc: 'Heavy-duty transport for industrial hubs', price: 8000, dailyReturn: 880, days: 75, img: 'https://images.unsplash.com/photo-1519003722824-194d4455a60c?q=80&w=200&auto=format&fit=crop' },
                     { id: 6, name: 'Cold Storage Reefer Bus', desc: 'Temperature-controlled passenger transit bus', price: 12000, dailyReturn: 1380, days: 90, img: 'https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?q=80&w=200&auto=format&fit=crop' },
-                    { id: 7, name: 'Metro Feeder Freight Truck', desc: 'Eco-friendly urban connectivity cargo truck', price: 18000, dailyReturn: 2150, days: 90, img: 'https://images.unsplash.com/photo-1601584115197-04ecc0da31d7?q=80&w=200&auto=format&fit=crop' },
+                    { id: 7, home: 'Metro Feeder Freight Truck', name: 'Metro Feeder Freight Truck', desc: 'Eco-friendly urban connectivity cargo truck', price: 18000, dailyReturn: 2150, days: 90, img: 'https://images.unsplash.com/photo-1601584115197-04ecc0da31d7?q=80&w=200&auto=format&fit=crop' },
                     { id: 8, name: 'Heavy Industrial Loader', desc: 'High-speed industrial site loader & transporter', price: 25000, dailyReturn: 3100, days: 100, img: 'https://images.unsplash.com/photo-1570125909232-eb263c188f7e?q=80&w=200&auto=format&fit=crop' }
                 ],
 
@@ -1376,4 +1482,4 @@
         }
     </script>
 </body>
-    </html>
+                        </html>
