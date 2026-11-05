@@ -1,1 +1,1628 @@
-# Transport-Invest
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TransitInvest - Smart Transport Investment Platform</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Alpine.js for State Management -->
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts: Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+    </style>
+</head>
+<body class="bg-slate-900 text-slate-100 min-h-screen flex flex-col justify-between pb-16 relative" x-data="investmentApp()">
+
+    <!-- TOP-RIGHT TOAST NOTIFICATION -->
+    <div class="fixed top-5 right-5 z-50 transition-all duration-300 transform" x-show="showToast" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-[-20px]" x-transition:enter-end="opacity-100 translate-y-0" x-transition:leave="transition ease-in duration-200" x-transition:leave-start="opacity-100 translate-y-0" x-transition:leave-end="opacity-0 translate-y-[-20px]" style="display: none;">
+        <div class="bg-slate-800 border border-amber-500/50 text-white px-4 py-3 rounded-2xl shadow-2xl flex items-center space-x-3">
+            <div class="bg-amber-500 text-slate-950 p-1.5 rounded-full text-xs font-bold flex items-center justify-center">
+                <i class="fa-solid fa-check"></i>
+            </div>
+            <p class="text-xs font-semibold tracking-wide" x-text="toastMessage"></p>
+        </div>
+    </div>
+
+    <!-- TOP BAR -->
+    <header class="bg-slate-800 border-b border-slate-700 px-4 py-2.5 flex justify-between items-center shadow-md sticky top-0 z-40" x-show="isLoggedIn">
+        <div class="flex items-center space-x-2">
+            <div class="bg-amber-500 text-slate-900 font-bold p-1.5 rounded-lg text-xs">
+                <i class="fa-solid fa-bus"></i>
+            </div>
+            <div>
+                <h1 class="font-bold text-xs text-white tracking-wide">TransitInvest</h1>
+                <p class="text-[10px] text-slate-400">Lakshmi Enterprise</p>
+            </div>
+        </div>
+        <div class="flex items-center space-x-3">
+            <div class="text-right">
+                <p class="text-[10px] text-slate-400">Balance</p>
+                <p class="text-xs font-semibold text-emerald-400">₹<span x-text="user.balance.toFixed(2)"></span></p>
+            </div>
+            <button @click="logout()" class="text-slate-400 hover:text-rose-400 text-sm">
+                <i class="fa-solid fa-power-off"></i>
+            </button>
+        </div>
+    </header>
+
+    <!-- MAIN CONTENT AREA -->
+    <main class="flex-grow pb-20">
+
+        <!-- 1. LOGIN PAGE -->
+        <section x-show="currentPage === 'login'" class="max-w-md mx-auto p-6 mt-10">
+            <div class="bg-slate-800 border border-slate-700 p-8 rounded-2xl shadow-xl">
+                <div class="text-center mb-6">
+                    <div class="inline-block bg-amber-500 text-slate-900 p-3 rounded-full text-2xl mb-2">
+                        <i class="fa-solid fa-truck-fast"></i>
+                    </div>
+                    <h2 class="text-2xl font-bold text-white">Welcome Back</h2>
+                    <p class="text-xs text-slate-400 mt-1">Sign in to your TransitInvest account</p>
+                </div>
+                <form @submit.prevent="login()" class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-medium text-slate-300 mb-1">Phone Number</label>
+                        <input type="tel" x-model="loginForm.phone" placeholder="Enter mobile number" required class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2.5 text-sm text-white focus:outline-none focus:border-amber-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-slate-300 mb-1">Password</label>
+                        <input type="password" x-model="loginForm.password" placeholder="••••••••" required class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2.5 text-sm text-white focus:outline-none focus:border-amber-500">
+                    </div>
+                    <button type="submit" class="w-full bg-amber-500 hover:bg-amber-600 text-slate-950 font-semibold py-2.5 rounded-lg text-sm transition shadow-lg">Login to Account</button>
+                </form>
+                <p class="text-center text-xs text-slate-400 mt-6">
+                    Don't have an account? 
+                    <button @click="currentPage = 'register'" class="text-amber-400 font-medium hover:underline">Register Now</button>
+                </p>
+            </div>
+        </section>
+
+        <!-- 2. REGISTRATION PAGE -->
+        <section x-show="currentPage === 'register'" class="max-w-md mx-auto p-6 mt-6">
+            <div class="bg-slate-800 border border-slate-700 p-8 rounded-2xl shadow-xl">
+                <div class="text-center mb-6">
+                    <div class="inline-block bg-amber-500 text-slate-900 p-3 rounded-full text-2xl mb-2">
+                        <i class="fa-solid fa-user-plus"></i>
+                    </div>
+                    <h2 class="text-2xl font-bold text-white">Create Account</h2>
+                    <p class="text-xs text-slate-400 mt-1">Join transport logistics investment (Get ₹15 Bonus)</p>
+                </div>
+                <form @submit.prevent="register()" class="space-y-3">
+                    <div>
+                        <label class="block text-xs font-medium text-slate-300 mb-1">Full Name</label>
+                        <input type="text" x-model="regForm.name" placeholder="Enter your full name" required class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-amber-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-slate-300 mb-1">Phone Number</label>
+                        <input type="tel" x-model="regForm.phone" placeholder="Enter mobile number" required class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-amber-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-slate-300 mb-1">Password</label>
+                        <input type="password" x-model="regForm.password" placeholder="••••••••" required class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-amber-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-slate-300 mb-1">Confirm Password</label>
+                        <input type="password" x-model="regForm.confirmPassword" placeholder="••••••••" required class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-amber-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-slate-300 mb-1">Inviting Code (Optional)</label>
+                        <input type="text" x-model="regForm.invite" placeholder="e.g., TR58920" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-amber-500">
+                    </div>
+                    <button type="submit" class="w-full bg-amber-500 hover:bg-amber-600 text-slate-950 font-semibold py-2.5 rounded-lg text-sm transition shadow-lg mt-2">Complete Registration</button>
+                </form>
+                <p class="text-center text-xs text-slate-400 mt-6">
+                    Already registered? 
+                    <button @click="currentPage = 'login'" class="text-amber-400 font-medium hover:underline">Sign In</button>
+                </p>
+            </div>
+        </section>
+
+        <!-- 3. HOME SECTION -->
+        <section x-show="isLoggedIn && currentPage === 'home'" class="max-w-xl mx-auto p-3 space-y-3.5" style="display: none;">
+            <div class="relative rounded-2xl overflow-hidden border border-slate-700 shadow-xl p-4 bg-cover bg-center" style="background-image: linear-gradient(to right, rgba(15, 23, 42, 0.9), rgba(30, 27, 75, 0.85)), url('https://images.unsplash.com/photo-1519003722824-194d4455a60c?q=80&w=1000&auto=format&fit=crop');">
+                <div class="relative z-10">
+                    <span class="bg-amber-500 text-slate-950 text-[9px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">Lakshmi Enterprise Venture</span>
+                    <h2 class="text-xl font-black mt-1.5 text-white">TransitInvest Logistics</h2>
+                    <p class="text-[11px] mt-0.5 text-slate-200 font-medium max-w-xs leading-snug">Earn stable daily returns by investing in commercial transport fleets and highway cargo networks.</p>
+                    <button @click="currentPage = 'products'" class="mt-2.5 bg-amber-500 hover:bg-amber-600 text-slate-950 text-[11px] font-bold px-3.5 py-1.5 rounded-lg transition shadow">Explore Plans <i class="fa-solid fa-arrow-right ml-1"></i></button>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-2.5">
+                <div class="relative rounded-xl overflow-hidden h-24 flex flex-col justify-end p-2.5 shadow-md group border border-slate-700 bg-cover bg-center" style="background-image: linear-gradient(to top, rgba(15, 23, 42, 0.9), rgba(15, 23, 42, 0.2)), url('https://images.unsplash.com/photo-1601584115197-04ecc0da31d7?q=80&w=600&auto=format&fit=crop');">
+                    <div>
+                        <h4 class="text-[11px] font-bold text-white">Highway Freight</h4>
+                        <p class="text-[9px] text-slate-300">Cargo & Logistics</p>
+                    </div>
+                </div>
+                <div class="relative rounded-xl overflow-hidden h-24 flex flex-col justify-end p-2.5 shadow-md group border border-slate-700 bg-cover bg-center" style="background-image: linear-gradient(to top, rgba(15, 23, 42, 0.9), rgba(15, 23, 42, 0.2)), url('https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?q=80&w=600&auto=format&fit=crop');">
+                    <div>
+                        <h4 class="text-[11px] font-bold text-white">Electric City Buses</h4>
+                        <p class="text-[9px] text-slate-300">Urban Transit</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-3 gap-2.5">
+                <div class="bg-slate-800 border border-slate-700 p-2.5 rounded-xl text-center">
+                    <p class="text-[9px] text-slate-400">Total Investors</p>
+                    <p class="text-xs font-bold text-white mt-0.5">142,850+</p>
+                </div>
+                <div class="bg-slate-800 border border-slate-700 p-2.5 rounded-xl text-center">
+                    <p class="text-[9px] text-slate-400">Daily Payouts</p>
+                    <p class="text-xs font-bold text-emerald-400 mt-0.5">₹42.5M+</p>
+                </div>
+                <div class="bg-slate-800 border border-slate-700 p-2.5 rounded-xl text-center">
+                    <p class="text-[9px] text-slate-400">Active Fleets</p>
+                    <p class="text-xs font-bold text-amber-400 mt-0.5">1,200+</p>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-4 gap-2.5">
+                <button @click="currentPage = 'recharge'" class="bg-slate-800 hover:bg-slate-750 border border-slate-700 p-2.5 rounded-xl flex flex-col items-center justify-center space-y-1.5 shadow transition group">
+                    <div class="w-10 h-10 bg-blue-600/20 text-blue-400 rounded-xl flex items-center justify-center text-base group-hover:scale-110 transition">
+                        <i class="fa-solid fa-wallet"></i>
+                    </div>
+                    <span class="text-[11px] font-bold text-slate-100 tracking-wide">Recharge</span>
+                </button>
+                <button @click="currentPage = 'withdraw'" class="bg-slate-800 hover:bg-slate-750 border border-slate-700 p-2.5 rounded-xl flex flex-col items-center justify-center space-y-1.5 shadow transition group">
+                    <div class="w-10 h-10 bg-emerald-600/20 text-emerald-400 rounded-xl flex items-center justify-center text-base group-hover:scale-110 transition">
+                        <i class="fa-solid fa-money-bill-transfer"></i>
+                    </div>
+                    <span class="text-[11px] font-bold text-slate-100 tracking-wide">Withdraw</span>
+                </button>
+                <button @click="currentPage = 'share'" class="bg-slate-800 hover:bg-slate-750 border border-slate-700 p-2.5 rounded-xl flex flex-col items-center justify-center space-y-1.5 shadow transition group">
+                    <div class="w-10 h-10 bg-amber-500/20 text-amber-400 rounded-xl flex items-center justify-center text-base group-hover:scale-110 transition">
+                        <i class="fa-solid fa-users"></i>
+                    </div>
+                    <span class="text-[11px] font-bold text-slate-100 tracking-wide">Share</span>
+                </button>
+                <button @click="openModal('support')" class="bg-slate-800 hover:bg-slate-750 border border-slate-700 p-2.5 rounded-xl flex flex-col items-center justify-center space-y-1.5 shadow transition group">
+                    <div class="w-10 h-10 bg-sky-500/20 text-sky-400 rounded-xl flex items-center justify-center text-base group-hover:scale-110 transition">
+                        <i class="fa-solid fa-headset"></i>
+                    </div>
+                    <span class="text-[11px] font-bold text-slate-100 tracking-wide">Online</span>
+                </button>
+            </div>
+
+            <div class="bg-gradient-to-r from-slate-800 to-slate-800/90 border border-amber-500/50 p-3.5 rounded-2xl shadow-lg relative overflow-hidden">
+                <div class="absolute top-0 right-0 bg-amber-500 text-slate-950 text-[9px] font-black px-2.5 py-0.5 rounded-bl-lg uppercase tracking-wider">Featured Plan</div>
+                <div class="flex items-center space-x-2.5">
+                    <div class="w-10 h-10 rounded-xl overflow-hidden border border-amber-500/30 bg-cover bg-center shrink-0" style="background-image: url('https://images.unsplash.com/photo-1601584115197-04ecc0da31d7?q=80&w=200&auto=format&fit=crop');"></div>
+                    <div>
+                        <h4 class="font-bold text-white text-xs">Express Highway Cargo</h4>
+                        <p class="text-[10px] text-slate-400 mt-0.5">Long-haul freight carrier partnership</p>
+                    </div>
+                </div>
+                <div class="grid grid-cols-3 gap-2 mt-3 pt-2.5 border-t border-slate-700 text-center">
+                    <div>
+                        <p class="text-[9px] text-slate-400">Price</p>
+                        <p class="text-[11px] font-bold text-white">₹1,500</p>
+                    </div>
+                    <div>
+                        <p class="text-[9px] text-slate-400">Daily Return</p>
+                        <p class="text-[11px] font-bold text-emerald-400">₹140</p>
+                    </div>
+                    <div>
+                        <p class="text-[9px] text-slate-400">Cycle</p>
+                        <p class="text-[11px] font-bold text-amber-400">50 Days</p>
+                    </div>
+                </div>
+                <button @click="invest({id: 2, name: 'Express Highway Cargo', price: 1500, dailyReturn: 140})" class="w-full mt-2.5 bg-amber-500 hover:bg-amber-600 text-slate-950 font-semibold py-1.5 rounded-lg text-xs transition">Buy Now</button>
+            </div>
+
+            <div class="bg-slate-800 border border-slate-700 p-4 rounded-2xl space-y-2 shadow-md">
+                <h3 class="font-bold text-white text-xs border-b border-slate-700 pb-1.5 flex items-center">
+                    <i class="fa-solid fa-building text-amber-500 mr-1.5"></i> Company Profile & Vision
+                </h3>
+                <p class="text-[11px] text-slate-300 leading-relaxed">
+                    Operated under the strategic umbrella of <strong>Lakshmi Enterprise</strong>, TransitInvest is a premier digital investment platform focusing entirely on commercial transport and highway cargo sectors.
+                </p>
+            </div>
+        </section>
+
+        <!-- RECHARGE PAGE -->
+        <section x-show="isLoggedIn && currentPage === 'recharge'" class="max-w-xl mx-auto p-3 space-y-3" style="display: none;">
+            <div class="flex items-center justify-between bg-slate-800 border border-slate-700 px-3.5 py-2.5 rounded-xl shadow">
+                <button @click="goToHome()" class="text-slate-300 hover:text-white flex items-center text-xs font-semibold">
+                    <i class="fa-solid fa-chevron-left mr-1.5"></i> Back
+                </button>
+                <h2 class="text-xs font-bold text-white">Recharge Wallet</h2>
+                <div class="w-8"></div>
+            </div>
+
+            <div class="bg-slate-800 border border-slate-700 p-4 rounded-2xl space-y-3 shadow-xl">
+                <div>
+                    <label class="block text-[11px] font-medium text-slate-300 mb-1.5">Enter Recharge Amount (₹)</label>
+                    <input type="number" x-model="rechargeAmount" placeholder="e.g., 500" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2.5 text-xs text-white focus:outline-none focus:border-amber-500 font-bold">
+                </div>
+                <div class="grid grid-cols-3 gap-2">
+                    <button @click="rechargeAmount = 500" class="bg-slate-900 hover:bg-slate-750 border border-slate-700 py-2 rounded-xl text-[11px] font-bold text-amber-400">₹500</button>
+                    <button @click="rechargeAmount = 1500" class="bg-slate-900 hover:bg-slate-750 border border-slate-700 py-2 rounded-xl text-[11px] font-bold text-amber-400">₹1,500</button>
+                    <button @click="rechargeAmount = 5000" class="bg-slate-900 hover:bg-slate-750 border border-slate-700 py-2 rounded-xl text-[11px] font-bold text-amber-400">₹5,000</button>
+                </div>
+                <button @click="openPaymentGateway()" class="w-full bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold py-2.5 rounded-xl text-xs transition shadow-lg">
+                    Proceed to Payment Gateway <i class="fa-solid fa-arrow-right ml-1"></i>
+                </button>
+            </div>
+        </section>
+
+        <!-- WITHDRAW PAGE -->
+        <section x-show="isLoggedIn && currentPage === 'withdraw'" class="max-w-xl mx-auto p-3 space-y-3" style="display: none;">
+            <div class="flex items-center justify-between bg-slate-800 border border-slate-700 px-3.5 py-2.5 rounded-xl shadow">
+                <button @click="goToHome()" class="text-slate-300 hover:text-white flex items-center text-xs font-semibold">
+                    <i class="fa-solid fa-chevron-left mr-1.5"></i> Back
+                </button>
+                <h2 class="text-xs font-bold text-white">Withdraw Funds</h2>
+                <div class="w-8"></div>
+            </div>
+
+            <div class="bg-slate-800 border border-slate-700 p-4 rounded-2xl space-y-3 shadow-xl">
+                <div class="bg-slate-900 p-3 rounded-xl border border-slate-700 flex justify-between items-center">
+                    <div>
+                        <p class="text-[9px] text-slate-400">Available Balance</p>
+                        <p class="text-sm font-bold text-emerald-400">₹<span x-text="user.balance.toFixed(2)"></span></p>
+                    </div>
+                    <button @click="openModal('bank')" class="bg-blue-600/20 text-blue-400 border border-blue-500/30 text-[11px] px-2.5 py-1 rounded-lg font-semibold" x-text="user.bankBound ? 'Edit Bank' : 'Bind Bank'"></button>
+                </div>
+
+                <div class="text-[11px] p-2.5 rounded-xl border" :class="user.bankBound ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400' : 'bg-rose-500/10 border-rose-500/30 text-rose-400'">
+                    <i :class="user.bankBound ? 'fa-solid fa-circle-check mr-1' : 'fa-solid fa-triangle-exclamation mr-1'"></i>
+                    <span x-text="user.bankBound ? ('Bank Linked: ' + user.bankDetails.accountNo) : 'Please bind bank account before withdrawal!'"></span>
+                </div>
+
+                <div>
+                    <label class="block text-[11px] font-medium text-slate-300 mb-1.5">Withdrawal Amount (Min ₹180)</label>
+                    <input type="number" x-model="withdrawAmount" placeholder="Enter amount (Min ₹180)" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2.5 text-xs text-white focus:outline-none focus:border-amber-500 font-bold">
+                    <p class="text-[9px] text-amber-400 mt-1">* 10% withdrawal fee will be deducted.</p>
+                </div>
+                <button @click="processWithdrawal()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 rounded-xl text-xs transition shadow-lg">
+                    Confirm Withdrawal to Bank <i class="fa-solid fa-check ml-1"></i>
+                </button>
+            </div>
+        </section>
+
+        <!-- 4. PRODUCTS SECTION (Invest Now changed to Buy Now) -->
+        <section x-show="isLoggedIn && currentPage === 'products'" class="max-w-xl mx-auto p-3 space-y-3" style="display: none;">
+            <div class="flex justify-between items-center bg-slate-800 border border-slate-700 p-2.5 rounded-xl">
+                <div>
+                    <h2 class="font-bold text-white text-xs">Transport Investment Plans</h2>
+                    <p class="text-[10px] text-slate-400">Select a plan to start earning</p>
+                </div>
+                <div class="flex space-x-1">
+                    <button @click="productTab = 'standard'" :class="productTab === 'standard' ? 'bg-amber-500 text-slate-950 font-bold' : 'bg-slate-900 text-slate-300'" class="px-2.5 py-1 rounded-lg text-[11px] transition">Standard (8)</button>
+                    <button @click="productTab = 'vip'" :class="productTab === 'vip' ? 'bg-amber-500 text-slate-950 font-bold' : 'bg-slate-900 text-slate-300'" class="px-2.5 py-1 rounded-lg text-[11px] transition">VIP (5)</button>
+                </div>
+            </div>
+
+            <div class="space-y-2.5" x-show="productTab === 'standard'">
+                <template x-for="item in standardProducts" :key="item.id">
+                    <div class="bg-slate-800 border border-slate-700 p-3.5 rounded-xl shadow-md relative overflow-hidden">
+                        <div class="flex justify-between items-start">
+                            <div class="flex items-center space-x-2.5">
+                                <div class="w-10 h-10 rounded-xl overflow-hidden border border-slate-700 bg-cover bg-center shrink-0" :style="'background-image: url(' + item.img + ');'"></div>
+                                <div>
+                                    <h4 class="font-bold text-white text-xs" x-text="item.name"></h4>
+                                    <p class="text-[10px] text-slate-400 mt-0.5" x-text="item.desc"></p>
+                                </div>
+                            </div>
+                            <span class="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[9px] font-semibold px-2 py-0.5 rounded-full">Active</span>
+                        </div>
+                        <div class="grid grid-cols-3 gap-2 mt-3 pt-2.5 border-t border-slate-700 text-center">
+                            <div>
+                                <p class="text-[9px] text-slate-400">Price</p>
+                                <p class="text-[11px] font-bold text-white">₹<span x-text="item.price.toLocaleString()"></span></p>
+                            </div>
+                            <div>
+                                <p class="text-[9px] text-slate-400">Daily Return</p>
+                                <p class="text-[11px] font-bold text-emerald-400">₹<span x-text="item.dailyReturn"></span></p>
+                            </div>
+                            <div>
+                                <p class="text-[9px] text-slate-400">Cycle</p>
+                                <p class="text-[11px] font-bold text-amber-400"><span x-text="item.days"></span> Days</p>
+                            </div>
+                        </div>
+                        <button @click="invest(item)" class="w-full mt-2.5 bg-amber-500 hover:bg-amber-600 text-slate-950 font-semibold py-1.5 rounded-lg text-xs transition">Buy Now</button>
+                    </div>
+                </template>
+            </div>
+
+            <div class="space-y-2.5" x-show="productTab === 'vip'" style="display: none;">
+                <template x-for="item in vipProducts" :key="item.id">
+                    <div class="bg-gradient-to-br from-slate-800 to-slate-800/90 border border-amber-500/40 p-3.5 rounded-xl shadow-lg relative overflow-hidden">
+                        <div class="absolute top-0 right-0 bg-amber-500 text-slate-950 text-[9px] font-black px-2.5 py-0.5 rounded-bl-lg uppercase tracking-wider">VIP</div>
+                        <div class="flex items-center space-x-2.5">
+                            <div class="w-10 h-10 rounded-xl overflow-hidden border border-amber-500/30 bg-cover bg-center shrink-0" :style="'background-image: url(' + item.img + ');'"></div>
+                            <div>
+                                <h4 class="font-bold text-white text-xs" x-text="item.name"></h4>
+                                <p class="text-[10px] text-amber-400/80 mt-0.5" x-text="item.desc"></p>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-3 gap-2 mt-3 pt-2.5 border-t border-slate-700 text-center">
+                            <div>
+                                <p class="text-[9px] text-slate-400">Investment</p>
+                                <p class="text-[11px] font-bold text-white">₹<span x-text="item.price.toLocaleString()"></span></p>
+                            </div>
+                            <div>
+                                <p class="text-[9px] text-slate-400">Daily Return</p>
+                                <p class="text-[11px] font-bold text-emerald-400">₹<span x-text="item.dailyReturn.toLocaleString()"></span></p>
+                            </div>
+                            <div>
+                                <p class="text-[9px] text-slate-400">Cycle</p>
+                                <p class="text-[11px] font-bold text-amber-400"><span x-text="item.days"></span> Days</p>
+                            </div>
+                        </div>
+                        <button @click="invest(item)" class="w-full mt-2.5 bg-amber-500 hover:bg-amber-600 text-slate-950 font-semibold py-1.5 rounded-lg text-xs transition">Unlock VIP Plan</button>
+                    </div>
+                </template>
+            </div>
+        </section>
+
+        <!-- 5. SHARE / TEAM SECTION (Optimized Spacing) -->
+        <section x-show="isLoggedIn && currentPage === 'share'" class="max-w-xl mx-auto p-3 space-y-3" style="display: none;">
+            <div class="bg-gradient-to-r from-blue-700 to-indigo-800 p-4 rounded-2xl shadow-xl text-white relative overflow-hidden">
+                <div class="relative z-10">
+                    <h2 class="text-sm font-black">Build Your Team Grow Together</h2>
+                    <p class="text-[11px] text-blue-100 mt-0.5">Invite friends & earn on Level 1, Level 2 & Level 3</p>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-3 gap-2">
+                <div class="bg-slate-800 border border-slate-700 p-2.5 rounded-xl text-center">
+                    <p class="text-xs font-bold text-white" x-text="user.teamLevel1.length + user.teamLevel2.length + user.teamLevel3.length">0</p>
+                    <p class="text-[9px] text-slate-400 mt-0.5">Total Team</p>
+                </div>
+                <div class="bg-slate-800 border border-slate-700 p-2.5 rounded-xl text-center">
+                    <p class="text-xs font-bold text-emerald-400" x-text="user.teamLevel1.filter(m => m.active).length + user.teamLevel2.filter(m => m.active).length + user.teamLevel3.filter(m => m.active).length">0</p>
+                    <p class="text-[9px] text-slate-400 mt-0.5">Active</p>
+                </div>
+                <div class="bg-slate-800 border border-slate-700 p-2.5 rounded-xl text-center">
+                    <p class="text-xs font-bold text-amber-400">₹<span x-text="user.teamRechargeTotal || 0"></span></p>
+                    <p class="text-[9px] text-slate-400 mt-0.5">Team Recharge</p>
+                </div>
+            </div>
+
+            <div class="bg-slate-800 border border-slate-700 p-3 rounded-xl grid grid-cols-2 divide-x divide-slate-700 text-center">
+                <div>
+                    <p class="text-[9px] text-slate-400">Team income</p>
+                    <p class="text-xs font-bold text-emerald-400 mt-0.5">₹<span x-text="user.teamIncomeTotal || 0"></span></p>
+                </div>
+                <div>
+                    <p class="text-[9px] text-slate-400">Team withdrawn</p>
+                    <p class="text-xs font-bold text-white mt-0.5">₹<span x-text="user.teamWithdrawnTotal || 0"></span></p>
+                </div>
+            </div>
+
+            <div class="bg-slate-800 border border-slate-700 p-3.5 rounded-2xl space-y-2.5">
+                <h3 class="font-bold text-white text-xs">Share Your Referral Link</h3>
+                <div class="bg-slate-900 border border-slate-700 p-2 rounded-xl flex justify-between items-center">
+                    <div class="overflow-hidden pr-2">
+                        <p class="text-[8px] text-slate-400">Referral Link</p>
+                        <p class="text-[11px] font-mono text-slate-300 truncate" x-text="user.referralLink"></p>
+                    </div>
+                    <button @click="copyLink()" class="bg-amber-500 hover:bg-amber-600 text-slate-950 font-semibold text-[11px] px-2.5 py-1 rounded-lg whitespace-nowrap">Copy</button>
+                </div>
+                <div class="flex justify-between items-center bg-slate-900 border border-slate-700 p-2 rounded-xl">
+                    <div>
+                        <p class="text-[8px] text-slate-400">Invite Code</p>
+                        <p class="text-[11px] font-mono font-bold text-amber-400" x-text="user.inviteCode"></p>
+                    </div>
+                    <button @click="copyCode()" class="bg-amber-500 hover:bg-amber-600 text-slate-950 font-semibold text-[11px] px-2.5 py-1 rounded-lg">Copy Code</button>
+                </div>
+            </div>
+
+            <a href="https://t.me/+Isp08EQlaQQyN2Q9" target="_blank" class="block bg-gradient-to-r from-sky-600 to-blue-600 p-3.5 rounded-2xl text-white shadow-lg hover:opacity-95 transition">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center space-x-2.5">
+                        <div class="bg-white text-blue-600 p-2.5 rounded-xl text-base">
+                            <i class="fa-brands fa-telegram"></i>
+                        </div>
+                        <div>
+                            <h4 class="font-bold text-xs">Join Official Telegram Channel</h4>
+                            <p class="text-[10px] text-blue-100 mt-0.5">Get daily updates & payment proofs</p>
+                        </div>
+                    </div>
+                    <i class="fa-solid fa-arrow-right text-xs"></i>
+                </div>
+            </a>
+
+            <!-- Team Levels -->
+            <div class="space-y-2">
+                <h3 class="font-bold text-white text-xs px-1">Team Levels Breakdown</h3>
+                <div @click="openLevelDetails(1)" class="bg-slate-800 border border-slate-700 p-3 rounded-xl flex justify-between items-center cursor-pointer hover:border-amber-500 transition">
+                    <div class="flex items-center space-x-2.5">
+                        <div class="bg-blue-600 text-white font-bold px-2.5 py-1.5 rounded-lg text-[10px]">LV 1</div>
+                        <div>
+                            <h4 class="font-bold text-white text-[11px]">Level 1 Members (30% Commission)</h4>
+                            <p class="text-[9px] text-slate-400 mt-0.5"><span x-text="user.teamLevel1.length"></span> members • Active & Recharged</p>
+                        </div>
+                    </div>
+                    <i class="fa-solid fa-chevron-right text-slate-500 text-[10px]"></i>
+                </div>
+                <div @click="openLevelDetails(2)" class="bg-slate-800 border border-slate-700 p-3 rounded-xl flex justify-between items-center cursor-pointer hover:border-amber-500 transition">
+                    <div class="flex items-center space-x-2.5">
+                        <div class="bg-indigo-600 text-white font-bold px-2.5 py-1.5 rounded-lg text-[10px]">LV 2</div>
+                        <div>
+                            <h4 class="font-bold text-white text-[11px]">Level 2 Members (3% Commission)</h4>
+                            <p class="text-[9px] text-slate-400 mt-0.5"><span x-text="user.teamLevel2.length"></span> members • Secondary Network</p>
+                        </div>
+                    </div>
+                    <i class="fa-solid fa-chevron-right text-slate-500 text-[10px]"></i>
+                </div>
+                <div @click="openLevelDetails(3)" class="bg-slate-800 border border-slate-700 p-3 rounded-xl flex justify-between items-center cursor-pointer hover:border-amber-500 transition">
+                    <div class="flex items-center space-x-2.5">
+                        <div class="bg-purple-600 text-white font-bold px-2.5 py-1.5 rounded-lg text-[10px]">LV 3</div>
+                        <div>
+                            <h4 class="font-bold text-white text-[11px]">Level 3 Members (2% Commission)</h4>
+                            <p class="text-[9px] text-slate-400 mt-0.5"><span x-text="user.teamLevel3.length"></span> members • Extended Network</p>
+                        </div>
+                    </div>
+                    <i class="fa-solid fa-chevron-right text-slate-500 text-[10px]"></i>
+                </div>
+            </div>
+        </section>
+
+        <!-- 6. MINE SECTION (Optimized Spacing) -->
+        <section x-show="isLoggedIn && currentPage === 'mine'" class="max-w-xl mx-auto p-3 space-y-3" style="display: none;">
+            <div class="bg-slate-800 border border-slate-700 p-4 rounded-2xl shadow-lg space-y-3">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center space-x-2.5">
+                        <div class="relative">
+                            <div class="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center text-white text-xl font-bold border-2 border-amber-500">
+                                <i class="fa-solid fa-user"></i>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="flex items-center space-x-1.5">
+                                <h3 class="font-bold text-white text-xs" x-text="user.name || user.phone"></h3>
+                                <i class="fa-solid fa-circle-check text-blue-400 text-[10px]"></i>
+                            </div>
+                            <div class="mt-0.5 inline-flex items-center bg-blue-600/30 border border-blue-500/40 text-blue-400 text-[9px] font-bold px-2 py-0.5 rounded-full">
+                                <i class="fa-solid fa-crown mr-1 text-amber-400"></i> VIP 0
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-3 gap-2 pt-2.5 border-t border-slate-700 text-center">
+                    <div>
+                        <p class="text-[11px] font-bold text-emerald-400">₹<span x-text="user.balance.toFixed(2)"></span></p>
+                        <p class="text-[9px] text-slate-400 mt-0.5">Available Balance</p>
+                    </div>
+                    <div class="border-x border-slate-700">
+                        <p class="text-[11px] font-bold text-white">₹<span x-text="user.activeInvestments.length"></span></p>
+                        <p class="text-[9px] text-slate-400 mt-0.5">Active Plans</p>
+                    </div>
+                    <div>
+                        <p class="text-[11px] font-bold text-amber-400">₹<span x-text="user.totalInvested.toLocaleString()"></span></p>
+                        <p class="text-[9px] text-slate-400 mt-0.5">Total Invested</p>
+                    </div>
+                </div>
+
+                <button @click="simulateMidnightPayout()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-2 rounded-xl text-[11px] transition shadow">
+                    <i class="fa-solid fa-clock mr-1"></i> Simulate Daily Midnight Payout (Once a Day)
+                </button>
+            </div>
+
+            <div class="bg-slate-800 border border-slate-700 rounded-2xl p-2.5 space-y-0.5 shadow-md">
+                <h3 class="font-bold text-white text-[11px] px-2.5 py-1.5 border-b border-slate-700">More services</h3>
+                
+                <div @click="currentPage = 'about'" class="flex items-center justify-between p-2.5 hover:bg-slate-750 rounded-xl cursor-pointer transition">
+                    <div class="flex items-center space-x-2.5">
+                        <div class="bg-amber-500/10 text-amber-400 p-2 rounded-lg text-xs"><i class="fa-solid fa-circle-info"></i></div>
+                        <span class="text-[11px] font-medium text-slate-200">About Company</span>
+                    </div>
+                    <i class="fa-solid fa-chevron-right text-slate-500 text-[10px]"></i>
+                </div>
+
+                <div @click="currentPage = 'myInvestments'" class="flex items-center justify-between p-2.5 hover:bg-slate-750 rounded-xl cursor-pointer transition">
+                    <div class="flex items-center space-x-2.5">
+                        <div class="bg-emerald-500/10 text-emerald-400 p-2 rounded-lg text-xs"><i class="fa-solid fa-box-archive"></i></div>
+                        <span class="text-[11px] font-medium text-slate-200">My Purchased Plans</span>
+                    </div>
+                    <i class="fa-solid fa-chevron-right text-slate-500 text-[10px]"></i>
+                </div>
+
+                <div @click="openModal('bank')" class="flex items-center justify-between p-2.5 hover:bg-slate-750 rounded-xl cursor-pointer transition">
+                    <div class="flex items-center space-x-2.5">
+                        <div class="bg-blue-500/10 text-blue-400 p-2 rounded-lg text-xs"><i class="fa-solid fa-building-columns"></i></div>
+                        <span class="text-[11px] font-medium text-slate-200">Bank Account</span>
+                    </div>
+                    <i class="fa-solid fa-chevron-right text-slate-500 text-[10px]"></i>
+                </div>
+                <div @click="currentPage = 'records'" class="flex items-center justify-between p-2.5 hover:bg-slate-750 rounded-xl cursor-pointer transition">
+                    <div class="flex items-center space-x-2.5">
+                        <div class="bg-amber-500/10 text-amber-400 p-2 rounded-lg text-xs"><i class="fa-solid fa-money-bill-transfer"></i></div>
+                        <span class="text-[11px] font-medium text-slate-200">Account Records</span>
+                    </div>
+                    <i class="fa-solid fa-chevron-right text-slate-500 text-[10px]"></i>
+                </div>
+                <div @click="currentPage = 'withdrawalRecords'" class="flex items-center justify-between p-2.5 hover:bg-slate-750 rounded-xl cursor-pointer transition">
+                    <div class="flex items-center space-x-2.5">
+                        <div class="bg-emerald-500/10 text-emerald-400 p-2 rounded-lg text-xs"><i class="fa-solid fa-wallet"></i></div>
+                        <span class="text-[11px] font-medium text-slate-200">Withdrawal Record</span>
+                    </div>
+                    <i class="fa-solid fa-chevron-right text-slate-500 text-[10px]"></i>
+                </div>
+                <div @click="openModal('support')" class="flex items-center justify-between p-2.5 hover:bg-slate-750 rounded-xl cursor-pointer transition">
+                    <div class="flex items-center space-x-2.5">
+                        <div class="bg-sky-500/10 text-sky-400 p-2 rounded-lg text-xs"><i class="fa-solid fa-headset"></i></div>
+                        <span class="text-[11px] font-medium text-slate-200">Customer Support</span>
+                    </div>
+                    <i class="fa-solid fa-chevron-right text-slate-500 text-[10px]"></i>
+                </div>
+                <div @click="downloadApp()" class="flex items-center justify-between p-2.5 hover:bg-slate-750 rounded-xl cursor-pointer transition">
+                    <div class="flex items-center space-x-2.5">
+                        <div class="bg-indigo-500/10 text-indigo-400 p-2 rounded-lg text-xs"><i class="fa-solid fa-download"></i></div>
+                        <span class="text-[11px] font-medium text-slate-200">Download App</span>
+                    </div>
+                    <i class="fa-solid fa-chevron-right text-slate-500 text-[10px]"></i>
+                </div>
+                <div @click="logout()" class="flex items-center justify-between p-2.5 hover:bg-rose-500/10 rounded-xl cursor-pointer transition">
+                    <div class="flex items-center space-x-2.5">
+                        <div class="bg-rose-500/10 text-rose-400 p-2 rounded-lg text-xs"><i class="fa-solid fa-right-from-bracket"></i></div>
+                        <span class="text-[11px] font-medium text-rose-400">Logout</span>
+                    </div>
+                    <i class="fa-solid fa-chevron-right text-rose-500 text-[10px]"></i>
+                </div>
+            </div>
+        </section>
+
+        <!-- ABOUT COMPANY PAGE -->
+        <section x-show="isLoggedIn && currentPage === 'about'" class="max-w-xl mx-auto p-3 space-y-3" style="display: none;">
+            <div class="flex items-center justify-between bg-slate-800 border border-slate-700 px-3.5 py-2.5 rounded-xl shadow">
+                <button @click="currentPage = 'mine'" class="text-slate-300 hover:text-white flex items-center text-xs font-semibold">
+                    <i class="fa-solid fa-chevron-left mr-1.5"></i> Back / Wapas
+                </button>
+                <h2 class="text-xs font-bold text-white">About Company</h2>
+                <div class="w-8"></div>
+            </div>
+
+            <div class="bg-slate-800 border border-slate-700 p-4 rounded-2xl space-y-4 shadow-xl text-xs text-slate-300 leading-relaxed">
+                <div class="space-y-2.5 pb-4 border-b border-slate-700">
+                    <div class="text-center pb-1">
+                        <div class="inline-block bg-amber-500 text-slate-950 p-2.5 rounded-full text-lg mb-1">
+                            <i class="fa-solid fa-bus"></i>
+                        </div>
+                        <h3 class="font-bold text-white text-xs">TransitInvest (Lakshmi Enterprise)</h3>
+                        <p class="text-[9px] text-amber-400">Smart Transport & Highway Cargo Investment Platform</p>
+                    </div>
+                    <p class="text-[11px]">
+                        <strong>TransitInvest</strong> is a premier digital investment platform focusing entirely on commercial transport fleets, highway cargo trucks, and electric city buses. Its primary objective is to provide secure and stable daily returns to investors.
+                    </p>
+                </div>
+
+                <div class="space-y-2">
+                    <div class="text-center pb-1">
+                        <h3 class="font-bold text-amber-400 text-xs">कंपनी परिचय एवं विजन</h3>
+                    </div>
+                    <p class="text-[11px]">
+                        <strong>TransitInvest</strong> ek pramukh digital investment platform hai jo commercial transport fleets, highway cargo trucks, aur electric city buses par focus karta hai. Iska mukhya uddeshya investors ko surakshit aur stable daily returns dena hai.
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <!-- MY PURCHASED PLANS PAGE -->
+        <section x-show="isLoggedIn && currentPage === 'myInvestments'" class="max-w-xl mx-auto p-3 space-y-3" style="display: none;">
+            <div class="flex items-center justify-between bg-slate-800 border border-slate-700 px-3.5 py-2.5 rounded-xl shadow">
+                <button @click="currentPage = 'mine'" class="text-slate-300 hover:text-white flex items-center text-xs font-semibold">
+                    <i class="fa-solid fa-chevron-left mr-1.5"></i> Back
+                </button>
+                <h2 class="text-xs font-bold text-white">My Purchased Plans</h2>
+                <div class="w-8"></div>
+            </div>
+
+            <div class="bg-slate-800 border border-slate-700 p-4 rounded-2xl shadow-md min-h-[220px]">
+                <template x-if="user.activeInvestments.length > 0">
+                    <div class="space-y-2.5">
+                        <template x-for="plan in user.activeInvestments" :key="plan.id">
+                            <div class="bg-slate-900 border border-slate-700 p-3 rounded-xl space-y-2">
+                                <div class="flex justify-between items-center border-b border-slate-800 pb-1.5">
+                                    <div class="flex items-center space-x-2.5">
+                                        <div class="w-8 h-8 rounded-lg overflow-hidden border border-slate-700 bg-cover bg-center shrink-0" :style="'background-image: url(' + plan.img + ');'"></div>
+                                        <div>
+                                            <h4 class="font-bold text-white text-xs" x-text="plan.name"></h4>
+                                            <p class="text-[8px] text-slate-400" x-text="'Purchased: ' + plan.purchaseDate"></p>
+                                        </div>
+                                    </div>
+                                    <span class="text-[8px] px-2 py-0.5 rounded-full font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">Running</span>
+                                </div>
+                                <div class="grid grid-cols-3 gap-2 text-center pt-0.5 text-[10px]">
+                                    <div class="bg-slate-800 p-1.5 rounded-lg">
+                                        <p class="text-[8px] text-slate-400">Invested</p>
+                                        <p class="font-bold text-white mt-0.5" x-text="'₹' + plan.price"></p>
+                                    </div>
+                                    <div class="bg-slate-800 p-1.5 rounded-lg">
+                                        <p class="text-[8px] text-slate-400">Daily Return</p>
+                                        <p class="font-bold text-emerald-400 mt-0.5" x-text="'+₹' + plan.dailyReturn"></p>
+                                    </div>
+                                    <div class="bg-slate-800 p-1.5 rounded-lg">
+                                        <p class="text-[8px] text-slate-400">Cycle Days</p>
+                                        <p class="font-bold text-amber-400 mt-0.5" x-text="plan.days + ' Days'"></p>
+                                    </div>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+                </template>
+
+                <template x-if="user.activeInvestments.length === 0">
+                    <div class="text-center py-8 space-y-2.5">
+                        <div class="inline-block bg-slate-900 text-slate-500 p-3 rounded-full text-xl border border-slate-700">
+                            <i class="fa-solid fa-box-open"></i>
+                        </div>
+                        <h3 class="font-bold text-white text-xs">No active plans purchased yet</h3>
+                        <p class="text-[10px] text-slate-400">Explore our products and start earning daily returns!</p>
+                        <button @click="currentPage = 'products'" class="mt-1.5 bg-amber-500 text-slate-950 font-bold text-xs px-3.5 py-1.5 rounded-xl shadow">Explore Plans</button>
+                    </div>
+                </template>
+            </div>
+        </section>
+
+        <!-- 7. ACCOUNT RECORD PAGE -->
+        <section x-show="isLoggedIn && currentPage === 'records'" class="max-w-xl mx-auto p-3 space-y-3" style="display: none;">
+            <div class="flex items-center justify-between bg-slate-800 border border-slate-700 px-3.5 py-2.5 rounded-xl shadow">
+                <button @click="currentPage = 'mine'" class="text-slate-300 hover:text-white flex items-center text-xs font-semibold">
+                    <i class="fa-solid fa-chevron-left mr-1.5"></i> Back
+                </button>
+                <h2 class="text-xs font-bold text-white">Account Record</h2>
+                <div class="w-8"></div>
+            </div>
+
+            <div class="bg-slate-800 border border-slate-700 p-4 rounded-2xl shadow-md min-h-[220px] flex flex-col justify-center">
+                <template x-if="recordList.length > 0">
+                    <div class="space-y-2.5">
+                        <template x-for="rec in recordList" :key="rec.id">
+                            <div class="bg-slate-900 border border-slate-700 p-3 rounded-xl flex justify-between items-center">
+                                <div class="flex items-center space-x-2.5">
+                                    <div :class="rec.type === 'in' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-rose-500/20 text-rose-400'" class="p-2 rounded-lg text-sm">
+                                        <i :class="rec.type === 'in' ? 'fa-solid fa-arrow-down-left' : 'fa-solid fa-arrow-up-right'"></i>
+                                    </div>
+                                    <div>
+                                        <h4 class="font-bold text-white text-xs" x-text="rec.title"></h4>
+                                        <p class="text-[9px] text-slate-400 mt-0.5" x-text="rec.date"></p>
+                                    </div>
+                                </div>
+                                <div class="text-right">
+                                    <p class="text-xs font-bold" :class="rec.type === 'in' ? 'text-emerald-400' : 'text-rose-400'" x-text="rec.amount"></p>
+                                    <span class="text-[8px] px-2 py-0.5 rounded-full font-semibold bg-emerald-500/10 text-emerald-400" x-text="rec.status"></span>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+                </template>
+
+                <template x-if="recordList.length === 0">
+                    <div class="text-center py-8 space-y-2">
+                        <div class="inline-block bg-slate-900 text-slate-500 p-3 rounded-full text-xl border border-slate-700">
+                            <i class="fa-solid fa-file-invoice"></i>
+                        </div>
+                        <h3 class="font-bold text-white text-xs">No records yet</h3>
+                    </div>
+                </template>
+            </div>
+        </section>
+
+        <!-- 8. WITHDRAWAL RECORD PAGE -->
+        <section x-show="isLoggedIn && currentPage === 'withdrawalRecords'" class="max-w-xl mx-auto p-3 space-y-3" style="display: none;">
+            <div class="flex items-center justify-between bg-slate-800 border border-slate-700 px-3.5 py-2.5 rounded-xl shadow">
+                <button @click="currentPage = 'mine'" class="text-slate-300 hover:text-white flex items-center text-xs font-semibold">
+                    <i class="fa-solid fa-chevron-left mr-1.5"></i> Back
+                </button>
+                <h2 class="text-xs font-bold text-white">Withdrawal Records</h2>
+                <div class="w-8"></div>
+            </div>
+
+            <div class="bg-slate-800 border border-slate-700 p-4 rounded-2xl shadow-md min-h-[220px] flex flex-col justify-center">
+                <template x-if="withdrawalRecords.length > 0">
+                    <div class="space-y-2.5">
+                        <template x-for="w in withdrawalRecords" :key="w.id">
+                            <div class="bg-slate-900 border border-slate-700 p-3 rounded-xl space-y-2">
+                                <div class="flex justify-between items-center border-b border-slate-800 pb-1.5">
+                                    <div class="flex items-center space-x-2">
+                                        <div class="bg-amber-500/20 text-amber-400 p-1.5 rounded-lg text-xs">
+                                            <i class="fa-solid fa-money-bill-transfer"></i>
+                                        </div>
+                                        <div>
+                                            <h4 class="font-bold text-white text-xs">Bank Withdrawal</h4>
+                                            <p class="text-[9px] text-slate-400" x-text="w.date"></p>
+                                        </div>
+                                    </div>
+                                    <span class="text-[8px] px-2 py-0.5 rounded-full font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20" x-text="w.status"></span>
+                                </div>
+                                <div class="grid grid-cols-3 gap-2 text-center pt-0.5 text-[10px]">
+                                    <div class="bg-slate-800 p-1.5 rounded-lg">
+                                        <p class="text-[8px] text-slate-400">Requested</p>
+                                        <p class="font-bold text-white mt-0.5" x-text="'₹' + w.requested"></p>
+                                    </div>
+                                    <div class="bg-slate-800 p-1.5 rounded-lg">
+                                        <p class="text-[8px] text-slate-400">Fee (10%)</p>
+                                        <p class="font-bold text-rose-400 mt-0.5" x-text="'-₹' + w.fee"></p>
+                                    </div>
+                                    <div class="bg-slate-800 p-1.5 rounded-lg">
+                                        <p class="text-[8px] text-slate-400">Received</p>
+                                        <p class="font-bold text-emerald-400 mt-0.5" x-text="'₹' + w.received"></p>
+                                    </div>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+                </template>
+
+                <template x-if="withdrawalRecords.length === 0">
+                    <div class="text-center py-8 space-y-2">
+                        <div class="inline-block bg-slate-900 text-slate-500 p-3 rounded-full text-xl border border-slate-700">
+                            <i class="fa-solid fa-wallet"></i>
+                        </div>
+                        <h3 class="font-bold text-white text-xs">No withdrawal records</h3>
+                    </div>
+                </template>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- HOME POPUP NOTICE MODAL -->
+    <div x-show="showWelcomePopup" class="fixed inset-0 z-50 bg-slate-950/80 flex items-center justify-center p-4" style="display: none;">
+        <div class="bg-slate-800 border border-amber-500/50 p-5 rounded-3xl w-full max-w-sm space-y-3.5 shadow-2xl relative">
+            <div class="absolute top-3 right-3">
+                <button @click="showWelcomePopup = false" class="text-slate-400 hover:text-white bg-slate-900 p-1.5 rounded-full"><i class="fa-solid fa-xmark text-sm"></i></button>
+            </div>
+            <div class="text-center space-y-1">
+                <div class="inline-block bg-amber-500 text-slate-950 p-2.5 rounded-full text-lg mb-0.5 shadow">
+                    <i class="fa-solid fa-bullhorn"></i>
+                </div>
+                <h3 class="font-black text-white text-sm">TransitInvest Official Notice</h3>
+                <p class="text-[10px] text-amber-400 font-semibold">Lakshmi Enterprise Platform</p>
+            </div>
+            
+            <div class="bg-slate-900 border border-slate-700 p-3 rounded-2xl space-y-2 text-xs text-slate-300">
+                <p class="flex items-center justify-between text-[11px]">
+                    <span class="text-slate-400"><i class="fa-solid fa-wallet text-amber-400 mr-1.5"></i> Minimum Recharge:</span>
+                    <strong class="text-white">₹500</strong>
+                </p>
+                <p class="flex items-center justify-between text-[11px]">
+                    <span class="text-slate-400"><i class="fa-solid fa-money-bill-transfer text-emerald-400 mr-1.5"></i> Minimum Withdrawal:</span>
+                    <strong class="text-emerald-400">₹180</strong>
+                </p>
+                <div class="border-t border-slate-800 pt-1.5 space-y-1">
+                    <p class="text-[10px] font-bold text-amber-300">Inviting Commission Structure:</p>
+                    <p class="text-[9px] text-slate-300 flex justify-between"><span>• Level 1 Commission:</span> <strong class="text-white">30%</strong></p>
+                    <p class="text-[9px] text-slate-300 flex justify-between"><span>• Level 2 Commission:</span> <strong class="text-white">3%</strong></p>
+                    <p class="text-[9px] text-slate-300 flex justify-between"><span>• Level 3 Commission:</span> <strong class="text-white">2%</strong></p>
+                </div>
+            </div>
+
+            <a href="https://t.me/+Isp08EQlaQQyN2Q9" target="_blank" class="flex items-center justify-between bg-gradient-to-r from-sky-600 to-blue-600 p-2.5 rounded-xl text-white shadow hover:opacity-95 transition">
+                <div class="flex items-center space-x-2">
+                    <div class="bg-white/20 p-1.5 rounded-lg text-sm"><i class="fa-brands fa-telegram"></i></div>
+                    <div>
+                        <p class="font-bold text-[11px]">Join Official Telegram</p>
+                        <p class="text-[8px] text-blue-100">Get updates & payment proofs</p>
+                    </div>
+                </div>
+                <i class="fa-solid fa-arrow-right text-[10px]"></i>
+            </a>
+
+            <button @click="showWelcomePopup = false" class="w-full bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold py-2 rounded-xl text-[11px] transition shadow">
+                I Understand & Agree
+            </button>
+        </div>
+    </div>
+
+    <!-- PAYMENT GATEWAY SIMULATION MODAL -->
+    <div x-show="showPaymentModal" class="fixed inset-0 z-50 bg-slate-950/90 flex items-center justify-center p-4" style="display: none;">
+        <div class="bg-slate-800 border border-amber-500/50 p-5 rounded-3xl w-full max-w-sm space-y-3.5 shadow-2xl text-center">
+            <div class="flex justify-between items-center border-b border-slate-700 pb-2">
+                <h3 class="font-bold text-white text-xs">Secure Payment Gateway</h3>
+                <button @click="showPaymentModal = false" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="space-y-2.5 py-1">
+                <div class="bg-slate-900 border border-slate-700 p-3 rounded-2xl">
+                    <p class="text-[9px] text-slate-400">Recharge Amount</p>
+                    <p class="text-lg font-black text-emerald-400 mt-0.5">₹<span x-text="rechargeAmount"></span></p>
+                </div>
+                <div class="bg-white p-3 rounded-2xl inline-block shadow-inner">
+                    <div class="w-32 h-32 bg-slate-100 flex flex-col items-center justify-center border border-dashed border-slate-400 rounded-xl text-slate-800 text-[11px] font-bold">
+                        <i class="fa-solid fa-qrcode text-3xl mb-1 text-slate-900"></i>
+                        Scan & Pay via UPI
+                    </div>
+                </div>
+                <p class="text-[9px] text-slate-400">Please complete payment on your UPI App</p>
+            </div>
+            <button @click="confirmPaymentSuccess()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 rounded-xl text-xs transition shadow-lg">
+                I Have Paid (Verify & Credit) <i class="fa-solid fa-check ml-1"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- BANK MODAL -->
+    <div x-show="showBankModal" class="fixed inset-0 z-50 bg-slate-950/80 flex items-center justify-center p-4" style="display: none;">
+        <div class="bg-slate-800 border border-slate-700 p-4 rounded-2xl w-full max-w-sm space-y-3 shadow-2xl">
+            <div class="flex justify-between items-center border-b border-slate-700 pb-2">
+                <h3 class="font-bold text-white text-xs">Bank Account Binding</h3>
+                <button @click="showBankModal = false" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <form @submit.prevent="saveBank()" class="space-y-2.5">
+                <div>
+                    <label class="block text-[9px] text-slate-400 mb-1">Account Holder Name</label>
+                    <input type="text" x-model="bankForm.name" placeholder="Enter name" required class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white">
+                </div>
+                <div>
+                    <label class="block text-[9px] text-slate-400 mb-1">Account Number</label>
+                    <input type="text" x-model="bankForm.accountNo" placeholder="Enter account number" required class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white">
+                </div>
+                <div>
+                    <label class="block text-[9px] text-slate-400 mb-1">IFSC Code</label>
+                    <input type="text" x-model="bankForm.ifsc" placeholder="Enter IFSC" required class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white">
+                </div>
+                <button type="submit" class="w-full bg-amber-500 hover:bg-amber-600 text-slate-950 font-semibold py-2 rounded-lg text-xs">Save Bank Details</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- CUSTOMER SUPPORT MODAL -->
+    <div x-show="showSupportModal" class="fixed inset-0 z-50 bg-slate-950/80 flex items-center justify-center p-4" style="display: none;">
+        <div class="bg-slate-800 border border-slate-700 p-4 rounded-2xl w-full max-w-sm space-y-3 shadow-2xl">
+            <div class="flex justify-between items-center border-b border-slate-700 pb-2">
+                <h3 class="font-bold text-white text-xs flex items-center">
+                    <i class="fa-solid fa-headset text-sky-400 mr-1.5"></i> Support Options
+                </h3>
+                <button @click="showSupportModal = false" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="space-y-2.5 pt-1">
+                <a href="https://t.me/+Isp08EQlaQQyN2Q9" target="_blank" class="flex items-center justify-between bg-gradient-to-r from-sky-600 to-blue-600 p-3 rounded-xl text-white shadow hover:opacity-95 transition">
+                    <div class="flex items-center space-x-2.5">
+                        <div class="bg-white/20 p-2 rounded-lg text-base"><i class="fa-brands fa-telegram"></i></div>
+                        <div>
+                            <p class="font-bold text-xs">Telegram Channel</p>
+                            <p class="text-[9px] text-blue-100">Join for official news & updates</p>
+                        </div>
+                    </div>
+                    <i class="fa-solid fa-arrow-right text-xs"></i>
+                </a>
+                <a href="https://t.me/earnnwithpk" target="_blank" class="flex items-center justify-between bg-gradient-to-r from-emerald-600 to-teal-600 p-3 rounded-xl text-white shadow hover:opacity-95 transition">
+                    <div class="flex items-center space-x-2.5">
+                        <div class="bg-white/20 p-2 rounded-lg text-base"><i class="fa-solid fa-headset"></i></div>
+                        <div>
+                            <p class="font-bold text-xs">Customer Support Link</p>
+                            <p class="text-[9px] text-emerald-100">Click to chat with live agent</p>
+                        </div>
+                    </div>
+                    <i class="fa-solid fa-arrow-right text-xs"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- LIVE TICKER -->
+    <div class="fixed bottom-16 left-0 right-0 z-30 px-3 pointer-events-none" x-show="isLoggedIn" style="display: none;">
+        <div class="max-w-xl mx-auto bg-slate-800/95 backdrop-blur border border-emerald-500/30 rounded-xl px-3.5 py-1.5 shadow-xl flex items-center justify-between text-[11px] pointer-events-auto">
+            <div class="flex items-center space-x-2 overflow-hidden">
+                <span class="bg-emerald-500/20 text-emerald-400 p-1.5 rounded-full"><i class="fa-solid fa-wallet text-[9px]"></i></span>
+                <p class="truncate text-slate-300">
+                    <span class="font-bold text-white" x-text="currentWithdrawal.user"></span> successfully withdrew 
+                    <span class="font-bold text-emerald-400" x-text="currentWithdrawal.amount"></span> to Bank
+                </p>
+            </div>
+            <span class="text-[9px] text-slate-500 whitespace-nowrap ml-2" x-text="currentWithdrawal.time"></span>
+        </div>
+    </div>
+
+    <!-- BOTTOM NAV BAR -->
+    <nav class="bg-slate-800 border-t border-slate-700 fixed bottom-0 left-0 right-0 py-2 px-6 flex justify-around items-center z-40 shadow-lg" x-show="isLoggedIn" style="display: none;">
+        <button @click="goToHome()" :class="currentPage === 'home' ? 'text-amber-500 font-bold' : 'text-slate-400'" class="flex flex-col items-center text-[11px]">
+            <i class="fa-solid fa-house text-sm"></i><span>Home</span>
+        </button>
+        <button @click="currentPage = 'products'" :class="currentPage === 'products' ? 'text-amber-500 font-bold' : 'text-slate-400'" class="flex flex-col items-center text-[11px]">
+            <i class="fa-solid fa-bus text-sm"></i><span>Products</span>
+        </button>
+        <button @click="currentPage = 'share'" :class="currentPage === 'share' ? 'text-amber-500 font-bold' : 'text-slate-400'" class="flex flex-col items-center text-[11px]">
+            <i class="fa-solid fa-users text-sm"></i><span>Team</span>
+        </button>
+        <button @click="currentPage = 'mine'" :class="currentPage === 'mine' ? 'text-amber-500 font-bold' : 'text-slate-400'" class="flex flex-col items-center text-[11px]">
+            <i class="fa-solid fa-user text-sm"></i><span>My</span>
+        </button>
+    </nav>
+
+    <!-- JAVASCRIPT LOGIC -->
+    <script>
+        function investmentApp() {
+            return {
+                isLoggedIn: false,
+                currentPage: 'login',
+                productTab: 'standard',
+                showBankModal: false,
+                showSupportModal: false,
+                showWelcomePopup: false,
+                showPaymentModal: false,
+                
+                showToast: false,
+                toastMessage: '',
+                toastTimer: null,
+
+                telegramBotToken: "9052381890:AAE0rID9HpPyf3kMeYDFVgJoVNNb-ykzbhk",
+                telegramChannels: {
+                    register: "@transitint00529",
+                    recharge: "@transit91620vest",
+                    withdraw: "@vest9184porttrans"
+                },
+
+                loginForm: { phone: '', password: '' },
+                regForm: { name: '', phone: '', password: '', confirmPassword: '', invite: '' },
+                bankForm: { name: '', accountNo: '', ifsc: '' },
+                rechargeAmount: 1500,
+                withdrawAmount: '',
+                
+                triggerToast(msg) {
+                    this.toastMessage = msg;
+                    this.showToast = true;
+                    if (this.toastTimer) clearTimeout(this.toastTimer);
+                    this.toastTimer = setTimeout(() => {
+                        this.showToast = false;
+                    }, 1000);
+                },
+
+                sendTelegramAlert(type, message) {
+                    if (!this.telegramBotToken) return;
+                    let channelTarget = this.telegramChannels[type];
+                    if (!channelTarget) return;
+
+                    let finalMessage = message + "\n\nPowered by ~ Hyper Code Zone";
+                    let url = `https://api.telegram.org/bot${this.telegramBotToken}/sendMessage?chat_id=${encodeURIComponent(channelTarget)}&text=${encodeURIComponent(finalMessage)}`;
+
+                    fetch(url)
+                        .then(res => res.json())
+                        .then(data => {
+                            if (!data.ok) {
+                                console.warn('Telegram API Response Warning:', data);
+                            }
+                        })
+                        .catch(err => console.error('Telegram Dispatch Error:', err));
+                },
+
+                registeredUsers: JSON.parse(localStorage.getItem('transit_users') || '{"950338982": {"pwd": "password123", "name": "Test User", "inviteCode": "TR95033", "referredBy": ""}}'),
+                
+                user: {
+                    name: '',
+                    phone: '',
+                    balance: 0,
+                    totalInvested: 0,
+                    activeInvestments: [],
+                    lastPayoutDate: '',
+                    inviteCode: '',
+                    referralLink: '',
+                    referredBy: '',
+                    bankBound: false,
+                    bankDetails: { name: '', accountNo: '', ifsc: '' },
+                    teamLevel1: [],
+                    teamLevel2: [],
+                    teamLevel3: [],
+                    teamRechargeTotal: 0,
+                    teamIncomeTotal: 0,
+                    teamWithdrawnTotal: 0
+                },
+                moneyIn: 0,
+                moneyOut: 0,
+                recordList: [],
+                withdrawalRecords: [],
+
+                withdrawalIndex: 0,
+                withdrawalsList: [
+                    { user: '+91 98452*****', amount: '₹2,450', time: 'Just now' },
+                    { user: '+91 91234*****', amount: '₹12,800', time: '1 min ago' },
+                    { user: '+91 88710*****', amount: '₹5,300', time: '2 mins ago' }
+                ],
+                get currentWithdrawal() {
+                    return this.withdrawalsList[this.withdrawalIndex];
+                },
+                
+                init() {
+                    setInterval(() => {
+                        this.withdrawalIndex = (this.withdrawalIndex + 1) % this.withdrawalsList.length;
+                    }, 4000);
+                },
+
+                saveUserData() {
+                    if (!this.user.phone) return;
+                    let db = JSON.parse(localStorage.getItem('transit_user_data') || '{}');
+                    db[this.user.phone] = {
+                        balance: this.user.balance,
+                        totalInvested: this.user.totalInvested,
+                        activeInvestments: this.user.activeInvestments,
+                        lastPayoutDate: this.user.lastPayoutDate,
+                        bankBound: this.user.bankBound,
+                        bankDetails: this.user.bankDetails,
+                        recordList: this.recordList,
+                        withdrawalRecords: this.withdrawalRecords,
+                        inviteCode: this.user.inviteCode,
+                        referralLink: this.user.referralLink,
+                        referredBy: this.user.referredBy,
+                        teamLevel1: this.user.teamLevel1,
+                        teamLevel2: this.user.teamLevel2,
+                        teamLevel3: this.user.teamLevel3,
+                        teamRechargeTotal: this.user.teamRechargeTotal,
+                        teamIncomeTotal: this.user.teamIncomeTotal,
+                        teamWithdrawnTotal: this.user.teamWithdrawnTotal
+                    };
+                    localStorage.setItem('transit_user_data', JSON.stringify(db));
+
+                    if(this.registeredUsers[this.user.phone]) {
+                        this.registeredUsers[this.user.phone].inviteCode = this.user.inviteCode;
+                        this.registeredUsers[this.user.phone].referredBy = this.user.referredBy;
+                        localStorage.setItem('transit_users', JSON.stringify(this.registeredUsers));
+                    }
+                },
+
+                loadUserData(phone) {
+                    let db = JSON.parse(localStorage.getItem('transit_user_data') || '{}');
+                    let uMeta = this.registeredUsers[phone] || {};
+                    
+                    let myInviteCode = uMeta.inviteCode || ('TR' + Math.floor(10000 + Math.random() * 90000));
+                    let myReferredBy = uMeta.referredBy || '';
+                    
+                    if (db[phone]) {
+                        this.user.balance = db[phone].balance;
+                        this.user.totalInvested = db[phone].totalInvested;
+                        this.user.activeInvestments = db[phone].activeInvestments || [];
+                        this.user.lastPayoutDate = db[phone].lastPayoutDate || '';
+                        this.user.bankBound = db[phone].bankBound || false;
+                        this.user.bankDetails = db[phone].bankDetails || { name: '', accountNo: '', ifsc: '' };
+                        this.recordList = db[phone].recordList || [];
+                        this.withdrawalRecords = db[phone].withdrawalRecords || [];
+                        this.user.inviteCode = db[phone].inviteCode || myInviteCode;
+                        this.user.referralLink = db[phone].referralLink || ('https://transit-invest.com/ref/' + this.user.inviteCode);
+                        this.user.referredBy = db[phone].referredBy || myReferredBy;
+                        this.user.teamLevel1 = db[phone].teamLevel1 || [];
+                        this.user.teamLevel2 = db[phone].teamLevel2 || [];
+                        this.user.teamLevel3 = db[phone].teamLevel3 || [];
+                        this.user.teamRechargeTotal = db[phone].teamRechargeTotal || 0;
+                        this.user.teamIncomeTotal = db[phone].teamIncomeTotal || 0;
+                        this.user.teamWithdrawnTotal = db[phone].teamWithdrawnTotal || 0;
+                    } else {
+                        this.user.balance = 15;
+                        this.user.totalInvested = 0;
+                        this.user.activeInvestments = [];
+                        this.user.lastPayoutDate = '';
+                        this.user.bankBound = false;
+                        this.user.bankDetails = { name: '', accountNo: '', ifsc: '' };
+                        this.user.inviteCode = myInviteCode;
+                        this.user.referralLink = 'https://transit-invest.com/ref/' + myInviteCode;
+                        this.user.referredBy = myReferredBy;
+                        this.user.teamLevel1 = [];
+                        this.user.teamLevel2 = [];
+                        this.user.teamLevel3 = [];
+                        this.user.teamRechargeTotal = 0;
+                        this.user.teamIncomeTotal = 0;
+                        this.user.teamWithdrawnTotal = 0;
+                        this.recordList = [{
+                            id: Date.now(),
+                            title: 'Welcome Registration Bonus',
+                            type: 'in',
+                            amount: '+₹15',
+                            date: new Date().toLocaleString(),
+                            status: 'Success'
+                        }];
+                        this.withdrawalRecords = [];
+                        this.saveUserData();
+                    }
+                },
+
+                goToHome() {
+                    this.currentPage = 'home';
+                    this.showWelcomePopup = true; 
+                },
+
+                register() {
+                    let name = this.regForm.name.trim();
+                    let phone = this.regForm.phone.trim();
+                    let pwd = this.regForm.password.trim();
+                    let cpwd = this.regForm.confirmPassword.trim();
+                    let inviteCodeInput = this.regForm.invite.trim();
+
+                    if (!name || !phone || !pwd || !cpwd) {
+                        this.triggerToast('Please fill in all details!');
+                        return;
+                    }
+
+                    if (pwd !== cpwd) {
+                        this.triggerToast('Passwords do not match!');
+                        return;
+                    }
+
+                    if (this.registeredUsers[phone]) {
+                        this.triggerToast('Phone already registered!');
+                        this.currentPage = 'login';
+                        return;
+                    }
+
+                    let newInviteCode = 'TR' + Math.floor(10000 + Math.random() * 90000);
+
+                    this.registeredUsers[phone] = { 
+                        pwd: pwd, 
+                        name: name, 
+                        inviteCode: newInviteCode,
+                        referredBy: inviteCodeInput 
+                    };
+                    localStorage.setItem('transit_users', JSON.stringify(this.registeredUsers));
+
+                    if (inviteCodeInput) {
+                        let allDb = JSON.parse(localStorage.getItem('transit_user_data') || '{}');
+                        
+                        for (let l1Phone in this.registeredUsers) {
+                            if (this.registeredUsers[l1Phone].inviteCode === inviteCodeInput) {
+                                if (!allDb[l1Phone]) allDb[l1Phone] = { teamLevel1: [], balance: 15, activeInvestments: [], totalInvested: 0 };
+                                if (!allDb[l1Phone].teamLevel1) allDb[l1Phone].teamLevel1 = [];
+                                
+                                allDb[l1Phone].teamLevel1.push({
+                                    phone: phone,
+                                    name: name,
+                                    date: new Date().toLocaleDateString(),
+                                    active: false
+                                });
+
+                                let l1RegisteredMeta = this.registeredUsers[l1Phone];
+                                if (l1RegisteredMeta && l1RegisteredMeta.referredBy) {
+                                    let l2InviteCode = l1RegisteredMeta.referredBy;
+                                    for (let l2Phone in this.registeredUsers) {
+                                        if (this.registeredUsers[l2Phone].inviteCode === l2InviteCode) {
+                                            if (!allDb[l2Phone]) allDb[l2Phone] = { teamLevel2: [], balance: 15, activeInvestments: [], totalInvested: 0 };
+                                            if (!allDb[l2Phone].teamLevel2) allDb[l2Phone].teamLevel2 = [];
+                                            
+                                            allDb[l2Phone].teamLevel2.push({
+                                                phone: phone,
+                                                name: name,
+                                                date: new Date().toLocaleDateString(),
+                                                active: false
+                                            });
+
+                                            let l2RegisteredMeta = this.registeredUsers[l2Phone];
+                                            if (l2RegisteredMeta && l2RegisteredMeta.referredBy) {
+                                                let l3InviteCode = l2RegisteredMeta.referredBy;
+                                                for (let l3Phone in this.registeredUsers) {
+                                                    if (this.registeredUsers[l3Phone].inviteCode === l3InviteCode) {
+                                                        if (!allDb[l3Phone]) allDb[l3Phone] = { teamLevel3: [], balance: 15, activeInvestments: [], totalInvested: 0 };
+                                                        if (!allDb[l3Phone].teamLevel3) allDb[l3Phone].teamLevel3 = [];
+                                                        
+                                                        allDb[l3Phone].teamLevel3.push({
+                                                            phone: phone,
+                                                            name: name,
+                                                            date: new Date().toLocaleDateString(),
+                                                            active: false
+                                                        });
+                                                        break;
+                                                    }
+                                                }
+                                            }
+                                            break;
+                                        }
+                                    }
+                                }
+                                localStorage.setItem('transit_user_data', JSON.stringify(allDb));
+                                break;
+                            }
+                        }
+                    }
+
+                    this.user.name = name;
+                    this.user.phone = phone;
+                    this.user.referredBy = inviteCodeInput;
+                    this.loadUserData(phone);
+
+                    this.isLoggedIn = true;
+                    this.currentPage = 'home';
+                    this.showWelcomePopup = true; 
+                    this.triggerToast('Register Successful');
+
+                    let regMsg = `🚀 NEW REGISTRATION ALERT!\n---------------------------\n👤 Name: ${name}\n📱 Phone: ${phone}\n🔗 Invite Code: ${newInviteCode}\n📥 Referred By: ${inviteCodeInput || 'Direct'}\n⏰ Time: ${new Date().toLocaleString()}`;
+                    this.sendTelegramAlert('register', regMsg);
+                },
+
+                login() {
+                    let phone = this.loginForm.phone.trim();
+                    let pwd = this.loginForm.password.trim();
+
+                    if (!this.registeredUsers[phone]) {
+                        this.triggerToast('Phone number not registered!');
+                        this.currentPage = 'register';
+                        return;
+                    }
+
+                    let userData = this.registeredUsers[phone];
+                    let storedPwd = typeof userData === 'object' ? userData.pwd : userData;
+                    let storedName = typeof userData === 'object' ? userData.name : phone;
+
+                    if (storedPwd !== pwd) {
+                        this.triggerToast('Incorrect password!');
+                        return;
+                    }
+
+                    this.user.phone = phone;
+                    this.user.name = storedName;
+                    this.loadUserData(phone);
+                    
+                    this.isLoggedIn = true;
+                    this.currentPage = 'home';
+                    this.showWelcomePopup = true; 
+                    this.triggerToast('Login Successful');
+                },
+
+                logout() {
+                    this.saveUserData();
+                    this.isLoggedIn = false;
+                    this.currentPage = 'login';
+                    this.loginForm = { phone: '', password: '' };
+                    this.triggerToast('Logged out successfully');
+                },
+
+                openModal(type) { 
+                    if(type === 'bank') {
+                        this.bankForm = { ...this.user.bankDetails };
+                        this.showBankModal = true;
+                    } 
+                    if(type === 'support') this.showSupportModal = true;
+                },
+
+                openLevelDetails(lvl) {
+                    let count = lvl === 1 ? this.user.teamLevel1.length : (lvl === 2 ? this.user.teamLevel2.length : this.user.teamLevel3.length);
+                    this.triggerToast(`Level ${lvl}: Currently ${count} members in your network.`);
+                },
+
+                openPaymentGateway() {
+                    let amount = Number(this.rechargeAmount);
+                    if(!amount || amount < 500) {
+                        this.triggerToast('Minimum recharge is ₹500');
+                        return;
+                    }
+                    this.showPaymentModal = true;
+                },
+
+                confirmPaymentSuccess() {
+                    let amount = Number(this.rechargeAmount);
+                    this.showPaymentModal = false;
+
+                    this.user.balance += amount;
+                    this.moneyIn += amount;
+                    
+                    this.recordList.unshift({
+                        id: Date.now(),
+                        title: 'Wallet Recharge (Success)',
+                        type: 'in',
+                        amount: `+₹${amount}`,
+                        date: new Date().toLocaleString(),
+                        status: 'Success'
+                    });
+                    this.saveUserData();
+
+                    let invitingCodeUsed = this.distributeRechargeCommissions(this.user.phone, amount);
+
+                    let refDisplay = invitingCodeUsed ? invitingCodeUsed : 'Direct';
+                    let rechargeMsg = `💰 SUCCESSFUL RECHARGE ALERT!\n---------------------------\n📱 User Phone: ${this.user.phone}\n👤 User Name: ${this.user.name || 'N/A'}\n💵 Amount: ₹${amount}\n📥 Referred By: ${refDisplay}\n💳 Status: Success & Credited\n⏰ Time: ${new Date().toLocaleString()}`;
+                    this.sendTelegramAlert('recharge', rechargeMsg);
+
+                    this.triggerToast(`Recharge of ₹${amount} successful! Balance updated.`);
+                    this.goToHome();
+                },
+
+                distributeRechargeCommissions(rechargerPhone, amount) {
+                    let allDb = JSON.parse(localStorage.getItem('transit_user_data') || '{}');
+                    let registeredDb = JSON.parse(localStorage.getItem('transit_users') || '{}');
+
+                    let currentUserMeta = registeredDb[rechargerPhone];
+                    if (!currentUserMeta || !currentUserMeta.referredBy) return null;
+
+                    let l1InviteCode = currentUserMeta.referredBy;
+
+                    for (let l1Phone in registeredDb) {
+                        if (registeredDb[l1Phone].inviteCode === l1InviteCode) {
+                            let l1Commission = Math.round(amount * 0.30);
+                            if (allDb[l1Phone]) {
+                                allDb[l1Phone].balance = (allDb[l1Phone].balance || 0) + l1Commission;
+                                allDb[l1Phone].teamIncomeTotal = (allDb[l1Phone].teamIncomeTotal || 0) + l1Commission;
+                                allDb[l1Phone].teamRechargeTotal = (allDb[l1Phone].teamRechargeTotal || 0) + amount;
+                                
+                                if(!allDb[l1Phone].recordList) allDb[l1Phone].recordList = [];
+                                allDb[l1Phone].recordList.unshift({
+                                    id: Date.now(),
+                                    title: 'Level 1 Recharge Commission (30%)',
+                                    type: 'in',
+                                    amount: `+₹${l1Commission}`,
+                                    date: new Date().toLocaleString(),
+                                    status: 'Success'
+                                });
+
+                                if (allDb[l1Phone].teamLevel1) {
+                                    allDb[l1Phone].teamLevel1.forEach(m => {
+                                        if (m.phone === rechargerPhone) m.active = true;
+                                    });
+                                }
+                            }
+
+                            let l1Meta = registeredDb[l1Phone];
+                            if (l1Meta && l1Meta.referredBy) {
+                                let l2InviteCode = l1Meta.referredBy;
+                                for (let l2Phone in registeredDb) {
+                                    if (registeredDb[l2Phone].inviteCode === l2InviteCode) {
+                                        let l2Commission = Math.round(amount * 0.03);
+                                        if (allDb[l2Phone]) {
+                                            allDb[l2Phone].balance = (allDb[l2Phone].balance || 0) + l2Commission;
+                                            allDb[l2Phone].teamIncomeTotal = (allDb[l2Phone].teamIncomeTotal || 0) + l2Commission;
+                                            allDb[l2Phone].teamRechargeTotal = (allDb[l2Phone].teamRechargeTotal || 0) + amount;
+
+                                            if(!allDb[l2Phone].recordList) allDb[l2Phone].recordList = [];
+                                            allDb[l2Phone].recordList.unshift({
+                                                id: Date.now(),
+                                                title: 'Level 2 Recharge Commission (3%)',
+                                                type: 'in',
+                                                amount: `+₹${l2Commission}`,
+                                                date: new Date().toLocaleString(),
+                                                status: 'Success'
+                                            });
+
+                                            if (allDb[l2Phone].teamLevel2) {
+                                                allDb[l2Phone].teamLevel2.forEach(m => {
+                                                    if (m.phone === rechargerPhone) m.active = true;
+                                                });
+                                            }
+                                        }
+
+                                        let l2Meta = registeredDb[l2Phone];
+                                        if (l2Meta && l2Meta.referredBy) {
+                                            let l3InviteCode = l2Meta.referredBy;
+                                            for (let l3Phone in registeredDb) {
+                                                if (registeredDb[l3Phone].inviteCode === l3InviteCode) {
+                                                    let l3Commission = Math.round(amount * 0.02);
+                                                    if (allDb[l3Phone]) {
+                                                        allDb[l3Phone].balance = (allDb[l3Phone].balance || 0) + l3Commission;
+                                                        allDb[l3Phone].teamIncomeTotal = (allDb[l3Phone].teamIncomeTotal || 0) + l3Commission;
+                                                        allDb[l3Phone].teamRechargeTotal = (allDb[l3Phone].teamRechargeTotal || 0) + amount;
+
+                                                        if(!allDb[l3Phone].recordList) allDb[l3Phone].recordList = [];
+                                                        allDb[l3Phone].recordList.unshift({
+                                                            id: Date.now(),
+                                                            title: 'Level 3 Recharge Commission (2%)',
+                                                            type: 'in',
+                                                            amount: `+₹${l3Commission}`,
+                                                            date: new Date().toLocaleString(),
+                                                            status: 'Success'
+                                                        });
+
+                                                        if (allDb[l3Phone].teamLevel3) {
+                                                            allDb[l3Phone].teamLevel3.forEach(m => {
+                                                                if (m.phone === rechargerPhone) m.active = true;
+                                                            });
+                                                        }
+                                                    }
+                                                    break;
+                                                }
+                                            }
+                                        }
+                                        break;
+                                    }
+                                }
+                            }
+                            break;
+                        }
+                    }
+                    localStorage.setItem('transit_user_data', JSON.stringify(allDb));
+                    if (this.isLoggedIn) {
+                        this.loadUserData(this.user.phone);
+                    }
+                    return l1InviteCode;
+                },
+
+                processWithdrawal() {
+                    if (!this.user.bankBound) {
+                        this.triggerToast('Please bind your bank account first!');
+                        this.openModal('bank');
+                        return;
+                    }
+
+                    let amt = Number(this.withdrawAmount);
+                    if(!amt || amt < 180) {
+                        this.triggerToast('Minimum withdrawal is ₹180');
+                        return;
+                    }
+                    if(amt > this.user.balance) {
+                        this.triggerToast('Insufficient balance!');
+                        return;
+                    }
+
+                    let fee = Math.round(amt * 0.10); 
+                    let netReceive = amt - fee;
+
+                    this.user.balance -= amt;
+                    this.moneyOut += amt;
+
+                    this.withdrawalRecords.unshift({
+                        id: Date.now(),
+                        requested: amt,
+                        fee: fee,
+                        received: netReceive,
+                        date: new Date().toLocaleString(),
+                        status: 'Success'
+                    });
+
+                    this.recordList.unshift({
+                        id: Date.now(),
+                        title: `Bank Withdrawal (Fee: ₹${fee})`,
+                        type: 'out',
+                        amount: `-₹${amt}`,
+                        date: new Date().toLocaleString(),
+                        status: 'Success'
+                    });
+
+                    this.saveUserData();
+                    this.distributeTeamWithdrawal(this.user.phone, amt);
+
+                    let bDetails = this.user.bankDetails;
+                    let withdrawMsg = `💸 NEW WITHDRAWAL REQUEST!\n---------------------------\n📱 User Phone: ${this.user.phone}\n👤 User Name: ${this.user.name || 'N/A'}\n📤 Requested: ₹${amt}\n🏷️ Fee (10%): ₹${fee}\n✅ Payable Amount: ₹${netReceive}\n🏦 Bank: ${bDetails.name} | A/C: ${bDetails.accountNo} | IFSC: ${bDetails.ifsc}\n⏰ Time: ${new Date().toLocaleString()}`;
+                    this.sendTelegramAlert('withdraw', withdrawMsg);
+
+                    this.triggerToast(`Withdrawal of ₹${amt} successful!`);
+                    this.withdrawAmount = '';
+                    this.goToHome();
+                },
+
+                distributeTeamWithdrawal(withdrawerPhone, amount) {
+                    let allDb = JSON.parse(localStorage.getItem('transit_user_data') || '{}');
+                    let registeredDb = JSON.parse(localStorage.getItem('transit_users') || '{}');
+
+                    let currentUserMeta = registeredDb[withdrawerPhone];
+                    if (!currentUserMeta || !currentUserMeta.referredBy) return;
+
+                    let l1InviteCode = currentUserMeta.referredBy;
+
+                    for (let l1Phone in registeredDb) {
+                        if (registeredDb[l1Phone].inviteCode === l1InviteCode) {
+                            if (allDb[l1Phone]) {
+                                allDb[l1Phone].teamWithdrawnTotal = (allDb[l1Phone].teamWithdrawnTotal || 0) + amount;
+                            }
+
+                            let l1Meta = registeredDb[l1Phone];
+                            if (l1Meta && l1Meta.referredBy) {
+                                let l2InviteCode = l1Meta.referredBy;
+                                for (let l2Phone in registeredDb) {
+                                    if (registeredDb[l2Phone].inviteCode === l2InviteCode) {
+                                        if (allDb[l2Phone]) {
+                                            allDb[l2Phone].teamWithdrawnTotal = (allDb[l2Phone].teamWithdrawnTotal || 0) + amount;
+                                        }
+
+                                        let l2Meta = registeredDb[l2Phone];
+                                        if (l2Meta && l2Meta.referredBy) {
+                                            let l3InviteCode = l2Meta.referredBy;
+                                            for (let l3Phone in registeredDb) {
+                                                if (registeredDb[l3Phone].inviteCode === l3InviteCode) {
+                                                    if (allDb[l3Phone]) {
+                                                        allDb[l3Phone].teamWithdrawnTotal = (allDb[l3Phone].teamWithdrawnTotal || 0) + amount;
+                                                    }
+                                                    break;
+                                                }
+                                            }
+                                        }
+                                        break;
+                                    }
+                                }
+                            }
+                            break;
+                        }
+                    }
+                    localStorage.setItem('transit_user_data', JSON.stringify(allDb));
+                    if (this.isLoggedIn) {
+                        this.loadUserData(this.user.phone);
+                    }
+                },
+
+                invest(item) {
+                    if(this.user.balance >= item.price) {
+                        this.user.balance -= item.price;
+                        this.user.totalInvested += item.price;
+                        
+                        this.user.activeInvestments.push({
+                            ...item,
+                            purchaseDate: new Date().toLocaleDateString()
+                        });
+
+                        this.recordList.unshift({
+                            id: Date.now(),
+                            title: `Investment in ${item.name}`,
+                            type: 'out',
+                            amount: `-₹${item.price}`,
+                            date: new Date().toLocaleString(),
+                            status: 'Success'
+                        });
+
+                        this.saveUserData();
+                        this.triggerToast(`Purchased ${item.name}!`);
+                    } else {
+                        this.triggerToast(`Low balance! Redirecting to recharge.`);
+                        this.rechargeAmount = item.price;
+                        this.currentPage = 'recharge';
+                    }
+                },
+
+                simulateMidnightPayout() {
+                    if (this.user.activeInvestments.length === 0) {
+                        this.triggerToast('No active plans running!');
+                        return;
+                    }
+
+                    let todayDate = new Date().toDateString();
+                    if (this.user.lastPayoutDate === todayDate) {
+                        this.triggerToast('Already claimed for today!');
+                        return;
+                    }
+
+                    let totalDailyEarnings = 0;
+                    this.user.activeInvestments.forEach(plan => {
+                        totalDailyEarnings += plan.dailyReturn;
+                    });
+
+                    this.user.balance += totalDailyEarnings;
+                    this.user.lastPayoutDate = todayDate;
+
+                    this.recordList.unshift({
+                        id: Date.now(),
+                        title: 'Daily Investment Return (Midnight Payout)',
+                        type: 'in',
+                        amount: `+₹${totalDailyEarnings}`,
+                        date: new Date().toLocaleString(),
+                        status: 'Success'
+                    });
+
+                    this.saveUserData();
+                    this.triggerToast(`Payout added: ₹${totalDailyEarnings}`);
+                },
+
+                downloadApp() {
+                    this.triggerToast("App Download - Coming Soon!");
+                },
+
+                saveBank() { 
+                    if (!this.bankForm.name || !this.bankForm.accountNo || !this.bankForm.ifsc) {
+                        this.triggerToast('Please fill all bank details!');
+                        return;
+                    }
+                    this.user.bankDetails = { ...this.bankForm };
+                    this.user.bankBound = true;
+                    this.showBankModal = false;
+                    this.saveUserData();
+                    this.triggerToast('Bank details saved successfully!'); 
+                },
+                copyCode() { 
+                    navigator.clipboard.writeText(this.user.inviteCode); 
+                    this.triggerToast('Invite code copied!'); 
+                },
+                copyLink() { 
+                    navigator.clipboard.writeText(this.user.referralLink); 
+                    this.triggerToast('Referral link copied!'); 
+                },
+
+                standardProducts: [
+                    { id: 1, name: 'City Minibus Daily Fleet', desc: 'Entry-level intra-city shuttle bus investment', price: 500, dailyReturn: 45, days: 30, img: 'https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?q=80&w=200&auto=format&fit=crop' },
+                    { id: 2, name: 'Highway Cargo Truck', desc: 'Long-haul freight carrier partnership', price: 1500, dailyReturn: 140, days: 50, img: 'https://images.unsplash.com/photo-1601584115197-04ecc0da31d7?q=80&w=200&auto=format&fit=crop' },
+                    { id: 3, name: 'Electric Delivery Van', desc: 'Last-mile green e-commerce delivery vans', price: 3000, dailyReturn: 300, days: 60, img: 'https://images.unsplash.com/photo-1563720223185-11003d516935?q=80&w=200&auto=format&fit=crop' },
+                    { id: 4, name: 'Interstate Passenger Coach', desc: 'Luxurious long-distance passenger travel', price: 5000, dailyReturn: 520, days: 60, img: 'https://images.unsplash.com/photo-1570125909232-eb263c188f7e?q=80&w=200&auto=format&fit=crop' },
+                    { id: 5, name: 'Logistics Warehouse Tipper', desc: 'Heavy-duty transport for industrial hubs', price: 8000, dailyReturn: 880, days: 75, img: 'https://images.unsplash.com/photo-1519003722824-194d4455a60c?q=80&w=200&auto=format&fit=crop' },
+                    { id: 6, name: 'Cold Storage Reefer Bus', desc: 'Temperature-controlled passenger transit bus', price: 12000, dailyReturn: 1380, days: 90, img: 'https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?q=80&w=200&auto=format&fit=crop' },
+                    { id: 7, name: 'Metro Feeder Freight Truck', desc: 'Eco-friendly urban connectivity cargo truck', price: 18000, dailyReturn: 2150, days: 90, img: 'https://images.unsplash.com/photo-1601584115197-04ecc0da31d7?q=80&w=200&auto=format&fit=crop' },
+                    { id: 8, name: 'Heavy Industrial Loader', desc: 'High-speed industrial site loader & transporter', price: 25000, dailyReturn: 3100, days: 100, img: 'https://images.unsplash.com/photo-1570125909232-eb263c188f7e?q=80&w=200&auto=format&fit=crop' }
+                ],
+
+                vipProducts: [
+                    { id: 101, name: 'VIP-1: Luxury Tour Bus Syndicate', desc: 'Premium tourism transport fleet partnership', price: 40000, dailyReturn: 5400, days: 120, img: 'https://images.unsplash.com/photo-1570125909232-eb263c188f7e?q=80&w=200&auto=format&fit=crop' },
+                    { id: 102, name: 'VIP-2: Commercial Freight Semi-Trailer', desc: 'Heavy industrial multi-axle freight truck', price: 75000, dailyReturn: 10800, days: 120, img: 'https://images.unsplash.com/photo-1601584115197-04ecc0da31d7?q=80&w=200&auto=format&fit=crop' },
+                    { id: 103, name: 'VIP-3: Electric Bus Transit Route', desc: 'Exclusive municipal e-bus charging & route stake', price: 150000, dailyReturn: 23500, days: 150, img: 'https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?q=80&w=200&auto=format&fit=crop' },
+                    { id: 104, name: 'VIP-4: Petroleum Tanker Logistics', desc: 'High-yield fuel and petroleum transit tanker', price: 300000, dailyReturn: 50000, days: 180, img: 'https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?q=80&w=200&auto=format&fit=crop' },
+                    { id: 105, name: 'VIP-5: Global Cargo Fleet Enterprise', desc: 'Full-scale multi-modal transportation network', price: 600000, dailyReturn: 110000, days: 200, img: 'https://images.unsplash.com/photo-1519003722824-194d4455a60c?q=80&w=200&auto=format&fit=crop' }
+                ]
+            }
+        }
+    </script>
+</body>
+</html>
