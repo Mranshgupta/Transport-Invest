@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="hi">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -29,7 +29,7 @@
     </div>
 
     <!-- TOP BAR -->
-    <header class="bg-slate-800 border-b border-slate-700 px-4 py-2.5 flex justify-between items-center shadow-md sticky top-0 z-40" x-show="isLoggedIn">
+    <header class="bg-slate-800 border-b border-slate-700 px-4 py-2.5 flex justify-between items-center shadow-md sticky top-0 z-40" x-show="isLoggedIn" style="display: none;">
         <div class="flex items-center space-x-2">
             <div class="bg-amber-500 text-slate-900 font-bold p-1.5 rounded-lg text-xs">
                 <i class="fa-solid fa-bus"></i>
@@ -82,7 +82,7 @@
         </section>
 
         <!-- 2. REGISTRATION PAGE -->
-        <section x-show="currentPage === 'register'" class="max-w-md mx-auto p-6 mt-6">
+        <section x-show="currentPage === 'register'" class="max-w-md mx-auto p-6 mt-6" style="display: none;">
             <div class="bg-slate-800 border border-slate-700 p-8 rounded-2xl shadow-xl">
                 <div class="text-center mb-6">
                     <div class="inline-block bg-amber-500 text-slate-900 p-3 rounded-full text-2xl mb-2">
@@ -286,7 +286,7 @@
             </div>
         </section>
 
-        <!-- 4. PRODUCTS SECTION (Invest Now changed to Buy Now) -->
+        <!-- 4. PRODUCTS SECTION -->
         <section x-show="isLoggedIn && currentPage === 'products'" class="max-w-xl mx-auto p-3 space-y-3" style="display: none;">
             <div class="flex justify-between items-center bg-slate-800 border border-slate-700 p-2.5 rounded-xl">
                 <div>
@@ -362,7 +362,7 @@
             </div>
         </section>
 
-        <!-- 5. SHARE / TEAM SECTION (Optimized Spacing) -->
+        <!-- 5. SHARE / TEAM SECTION -->
         <section x-show="isLoggedIn && currentPage === 'share'" class="max-w-xl mx-auto p-3 space-y-3" style="display: none;">
             <div class="bg-gradient-to-r from-blue-700 to-indigo-800 p-4 rounded-2xl shadow-xl text-white relative overflow-hidden">
                 <div class="relative z-10">
@@ -466,7 +466,7 @@
             </div>
         </section>
 
-        <!-- 6. MINE SECTION (Optimized Spacing) -->
+        <!-- 6. MINE SECTION -->
         <section x-show="isLoggedIn && currentPage === 'mine'" class="max-w-xl mx-auto p-3 space-y-3" style="display: none;">
             <div class="bg-slate-800 border border-slate-700 p-4 rounded-2xl shadow-lg space-y-3">
                 <div class="flex items-center justify-between">
@@ -494,7 +494,7 @@
                         <p class="text-[9px] text-slate-400 mt-0.5">Available Balance</p>
                     </div>
                     <div class="border-x border-slate-700">
-                        <p class="text-[11px] font-bold text-white">₹<span x-text="user.activeInvestments.length"></span></p>
+                        <p class="text-[11px] font-bold text-white"><span x-text="user.activeInvestments.length"></span></p>
                         <p class="text-[9px] text-slate-400 mt-0.5">Active Plans</p>
                     </div>
                     <div>
@@ -815,32 +815,6 @@
         </div>
     </div>
 
-    <!-- PAYMENT GATEWAY SIMULATION MODAL -->
-    <div x-show="showPaymentModal" class="fixed inset-0 z-50 bg-slate-950/90 flex items-center justify-center p-4" style="display: none;">
-        <div class="bg-slate-800 border border-amber-500/50 p-5 rounded-3xl w-full max-w-sm space-y-3.5 shadow-2xl text-center">
-            <div class="flex justify-between items-center border-b border-slate-700 pb-2">
-                <h3 class="font-bold text-white text-xs">Secure Payment Gateway</h3>
-                <button @click="showPaymentModal = false" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
-            </div>
-            <div class="space-y-2.5 py-1">
-                <div class="bg-slate-900 border border-slate-700 p-3 rounded-2xl">
-                    <p class="text-[9px] text-slate-400">Recharge Amount</p>
-                    <p class="text-lg font-black text-emerald-400 mt-0.5">₹<span x-text="rechargeAmount"></span></p>
-                </div>
-                <div class="bg-white p-3 rounded-2xl inline-block shadow-inner">
-                    <div class="w-32 h-32 bg-slate-100 flex flex-col items-center justify-center border border-dashed border-slate-400 rounded-xl text-slate-800 text-[11px] font-bold">
-                        <i class="fa-solid fa-qrcode text-3xl mb-1 text-slate-900"></i>
-                        Scan & Pay via UPI
-                    </div>
-                </div>
-                <p class="text-[9px] text-slate-400">Please complete payment on your UPI App</p>
-            </div>
-            <button @click="confirmPaymentSuccess()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 rounded-xl text-xs transition shadow-lg">
-                I Have Paid (Verify & Credit) <i class="fa-solid fa-check ml-1"></i>
-            </button>
-        </div>
-    </div>
-
     <!-- BANK MODAL -->
     <div x-show="showBankModal" class="fixed inset-0 z-50 bg-slate-950/80 flex items-center justify-center p-4" style="display: none;">
         <div class="bg-slate-800 border border-slate-700 p-4 rounded-2xl w-full max-w-sm space-y-3 shadow-2xl">
@@ -940,7 +914,6 @@
                 showBankModal: false,
                 showSupportModal: false,
                 showWelcomePopup: false,
-                showPaymentModal: false,
                 
                 showToast: false,
                 toastMessage: '',
@@ -976,14 +949,7 @@
                     let finalMessage = message + "\n\nPowered by ~ Hyper Code Zone";
                     let url = `https://api.telegram.org/bot${this.telegramBotToken}/sendMessage?chat_id=${encodeURIComponent(channelTarget)}&text=${encodeURIComponent(finalMessage)}`;
 
-                    fetch(url)
-                        .then(res => res.json())
-                        .then(data => {
-                            if (!data.ok) {
-                                console.warn('Telegram API Response Warning:', data);
-                            }
-                        })
-                        .catch(err => console.error('Telegram Dispatch Error:', err));
+                    fetch(url).catch(err => console.error('Telegram Dispatch Error:', err));
                 },
 
                 registeredUsers: JSON.parse(localStorage.getItem('transit_users') || '{"950338982": {"pwd": "password123", "name": "Test User", "inviteCode": "TR95033", "referredBy": ""}}'),
@@ -1007,8 +973,6 @@
                     teamIncomeTotal: 0,
                     teamWithdrawnTotal: 0
                 },
-                moneyIn: 0,
-                moneyOut: 0,
                 recordList: [],
                 withdrawalRecords: [],
 
@@ -1165,44 +1129,6 @@
                                     date: new Date().toLocaleDateString(),
                                     active: false
                                 });
-
-                                let l1RegisteredMeta = this.registeredUsers[l1Phone];
-                                if (l1RegisteredMeta && l1RegisteredMeta.referredBy) {
-                                    let l2InviteCode = l1RegisteredMeta.referredBy;
-                                    for (let l2Phone in this.registeredUsers) {
-                                        if (this.registeredUsers[l2Phone].inviteCode === l2InviteCode) {
-                                            if (!allDb[l2Phone]) allDb[l2Phone] = { teamLevel2: [], balance: 15, activeInvestments: [], totalInvested: 0 };
-                                            if (!allDb[l2Phone].teamLevel2) allDb[l2Phone].teamLevel2 = [];
-                                            
-                                            allDb[l2Phone].teamLevel2.push({
-                                                phone: phone,
-                                                name: name,
-                                                date: new Date().toLocaleDateString(),
-                                                active: false
-                                            });
-
-                                            let l2RegisteredMeta = this.registeredUsers[l2Phone];
-                                            if (l2RegisteredMeta && l2RegisteredMeta.referredBy) {
-                                                let l3InviteCode = l2RegisteredMeta.referredBy;
-                                                for (let l3Phone in this.registeredUsers) {
-                                                    if (this.registeredUsers[l3Phone].inviteCode === l3InviteCode) {
-                                                        if (!allDb[l3Phone]) allDb[l3Phone] = { teamLevel3: [], balance: 15, activeInvestments: [], totalInvested: 0 };
-                                                        if (!allDb[l3Phone].teamLevel3) allDb[l3Phone].teamLevel3 = [];
-                                                        
-                                                        allDb[l3Phone].teamLevel3.push({
-                                                            phone: phone,
-                                                            name: name,
-                                                            date: new Date().toLocaleDateString(),
-                                                            active: false
-                                                        });
-                                                        break;
-                                                    }
-                                                }
-                                            }
-                                            break;
-                                        }
-                                    }
-                                }
                                 localStorage.setItem('transit_user_data', JSON.stringify(allDb));
                                 break;
                             }
@@ -1218,9 +1144,6 @@
                     this.currentPage = 'home';
                     this.showWelcomePopup = true; 
                     this.triggerToast('Register Successful');
-
-                    let regMsg = `🚀 NEW REGISTRATION ALERT!\n---------------------------\n👤 Name: ${name}\n📱 Phone: ${phone}\n🔗 Invite Code: ${newInviteCode}\n📥 Referred By: ${inviteCodeInput || 'Direct'}\n⏰ Time: ${new Date().toLocaleString()}`;
-                    this.sendTelegramAlert('register', regMsg);
                 },
 
                 login() {
@@ -1273,165 +1196,31 @@
                     this.triggerToast(`Level ${lvl}: Currently ${count} members in your network.`);
                 },
 
-               openPaymentGateway() {
-    let amount = Number(this.rechargeAmount);
-    if(!amount || amount < 500) {
-        this.triggerToast('Minimum recharge is ₹500');
-        return;
-    }
-
-    let orderId = 'ORD_' + Date.now() + '_' + Math.floor(Math.random() * 1000);
-    let callbackUrl = window.location.href;
-
-    this.triggerToast('Redirecting to Payment Gateway...');
-
-    setTimeout(() => {
-        let queryParams = new URLSearchParams({
-            merchant_id: "100225399",
-            amount: amount,
-            order_id: orderId,
-            customer_phone: this.user.phone,
-            key: "a707d50a0lcd45fdbb60a71b0c69f15a",
-            redirect_url: callbackUrl
-        });
-
-        let finalGatewayUrl = `https://api.wataiglobal.com/pay/web?${queryParams.toString()}`;
-        window.location.href = finalGatewayUrl;
-    }, 800);
-               }
-
-                confirmPaymentSuccess() {
+                openPaymentGateway() {
                     let amount = Number(this.rechargeAmount);
-                    this.showPaymentModal = false;
-
-                    this.user.balance += amount;
-                    this.moneyIn += amount;
-                    
-                    this.recordList.unshift({
-                        id: Date.now(),
-                        title: 'Wallet Recharge (Success)',
-                        type: 'in',
-                        amount: `+₹${amount}`,
-                        date: new Date().toLocaleString(),
-                        status: 'Success'
-                    });
-                    this.saveUserData();
-
-                    let invitingCodeUsed = this.distributeRechargeCommissions(this.user.phone, amount);
-
-                    let refDisplay = invitingCodeUsed ? invitingCodeUsed : 'Direct';
-                    let rechargeMsg = `💰 SUCCESSFUL RECHARGE ALERT!\n---------------------------\n📱 User Phone: ${this.user.phone}\n👤 User Name: ${this.user.name || 'N/A'}\n💵 Amount: ₹${amount}\n📥 Referred By: ${refDisplay}\n💳 Status: Success & Credited\n⏰ Time: ${new Date().toLocaleString()}`;
-                    this.sendTelegramAlert('recharge', rechargeMsg);
-
-                    this.triggerToast(`Recharge of ₹${amount} successful! Balance updated.`);
-                    this.goToHome();
-                },
-
-                distributeRechargeCommissions(rechargerPhone, amount) {
-                    let allDb = JSON.parse(localStorage.getItem('transit_user_data') || '{}');
-                    let registeredDb = JSON.parse(localStorage.getItem('transit_users') || '{}');
-
-                    let currentUserMeta = registeredDb[rechargerPhone];
-                    if (!currentUserMeta || !currentUserMeta.referredBy) return null;
-
-                    let l1InviteCode = currentUserMeta.referredBy;
-
-                    for (let l1Phone in registeredDb) {
-                        if (registeredDb[l1Phone].inviteCode === l1InviteCode) {
-                            let l1Commission = Math.round(amount * 0.30);
-                            if (allDb[l1Phone]) {
-                                allDb[l1Phone].balance = (allDb[l1Phone].balance || 0) + l1Commission;
-                                allDb[l1Phone].teamIncomeTotal = (allDb[l1Phone].teamIncomeTotal || 0) + l1Commission;
-                                allDb[l1Phone].teamRechargeTotal = (allDb[l1Phone].teamRechargeTotal || 0) + amount;
-                                
-                                if(!allDb[l1Phone].recordList) allDb[l1Phone].recordList = [];
-                                allDb[l1Phone].recordList.unshift({
-                                    id: Date.now(),
-                                    title: 'Level 1 Recharge Commission (30%)',
-                                    type: 'in',
-                                    amount: `+₹${l1Commission}`,
-                                    date: new Date().toLocaleString(),
-                                    status: 'Success'
-                                });
-
-                                if (allDb[l1Phone].teamLevel1) {
-                                    allDb[l1Phone].teamLevel1.forEach(m => {
-                                        if (m.phone === rechargerPhone) m.active = true;
-                                    });
-                                }
-                            }
-
-                            let l1Meta = registeredDb[l1Phone];
-                            if (l1Meta && l1Meta.referredBy) {
-                                let l2InviteCode = l1Meta.referredBy;
-                                for (let l2Phone in registeredDb) {
-                                    if (registeredDb[l2Phone].inviteCode === l2InviteCode) {
-                                        let l2Commission = Math.round(amount * 0.03);
-                                        if (allDb[l2Phone]) {
-                                            allDb[l2Phone].balance = (allDb[l2Phone].balance || 0) + l2Commission;
-                                            allDb[l2Phone].teamIncomeTotal = (allDb[l2Phone].teamIncomeTotal || 0) + l2Commission;
-                                            allDb[l2Phone].teamRechargeTotal = (allDb[l2Phone].teamRechargeTotal || 0) + amount;
-
-                                            if(!allDb[l2Phone].recordList) allDb[l2Phone].recordList = [];
-                                            allDb[l2Phone].recordList.unshift({
-                                                id: Date.now(),
-                                                title: 'Level 2 Recharge Commission (3%)',
-                                                type: 'in',
-                                                amount: `+₹${l2Commission}`,
-                                                date: new Date().toLocaleString(),
-                                                status: 'Success'
-                                            });
-
-                                            if (allDb[l2Phone].teamLevel2) {
-                                                allDb[l2Phone].teamLevel2.forEach(m => {
-                                                    if (m.phone === rechargerPhone) m.active = true;
-                                                });
-                                            }
-                                        }
-
-                                        let l2Meta = registeredDb[l2Phone];
-                                        if (l2Meta && l2Meta.referredBy) {
-                                            let l3InviteCode = l2Meta.referredBy;
-                                            for (let l3Phone in registeredDb) {
-                                                if (registeredDb[l3Phone].inviteCode === l3InviteCode) {
-                                                    let l3Commission = Math.round(amount * 0.02);
-                                                    if (allDb[l3Phone]) {
-                                                        allDb[l3Phone].balance = (allDb[l3Phone].balance || 0) + l3Commission;
-                                                        allDb[l3Phone].teamIncomeTotal = (allDb[l3Phone].teamIncomeTotal || 0) + l3Commission;
-                                                        allDb[l3Phone].teamRechargeTotal = (allDb[l3Phone].teamRechargeTotal || 0) + amount;
-
-                                                        if(!allDb[l3Phone].recordList) allDb[l3Phone].recordList = [];
-                                                        allDb[l3Phone].recordList.unshift({
-                                                            id: Date.now(),
-                                                            title: 'Level 3 Recharge Commission (2%)',
-                                                            type: 'in',
-                                                            amount: `+₹${l3Commission}`,
-                                                            date: new Date().toLocaleString(),
-                                                            status: 'Success'
-                                                        });
-
-                                                        if (allDb[l3Phone].teamLevel3) {
-                                                            allDb[l3Phone].teamLevel3.forEach(m => {
-                                                                if (m.phone === rechargerPhone) m.active = true;
-                                                            });
-                                                        }
-                                                    }
-                                                    break;
-                                                }
-                                            }
-                                        }
-                                        break;
-                                    }
-                                }
-                            }
-                            break;
-                        }
+                    if(!amount || amount < 500) {
+                        this.triggerToast('Minimum recharge is ₹500');
+                        return;
                     }
-                    localStorage.setItem('transit_user_data', JSON.stringify(allDb));
-                    if (this.isLoggedIn) {
-                        this.loadUserData(this.user.phone);
-                    }
-                    return l1InviteCode;
+
+                    let orderId = 'ORD_' + Date.now() + '_' + Math.floor(Math.random() * 1000);
+                    let callbackUrl = window.location.href;
+
+                    this.triggerToast('Redirecting to Payment Gateway...');
+
+                    setTimeout(() => {
+                        let queryParams = new URLSearchParams({
+                            merchant_id: "100225399",
+                            amount: amount,
+                            order_id: orderId,
+                            customer_phone: this.user.phone,
+                            key: "a707d50a0lcd45fdbb60a71b0c69f15a",
+                            redirect_url: callbackUrl
+                        });
+
+                        let finalGatewayUrl = `https://api.wataiglobal.com/pay/web?${queryParams.toString()}`;
+                        window.location.href = finalGatewayUrl;
+                    }, 800);
                 },
 
                 processWithdrawal() {
@@ -1455,7 +1244,6 @@
                     let netReceive = amt - fee;
 
                     this.user.balance -= amt;
-                    this.moneyOut += amt;
 
                     this.withdrawalRecords.unshift({
                         id: Date.now(),
@@ -1476,64 +1264,9 @@
                     });
 
                     this.saveUserData();
-                    this.distributeTeamWithdrawal(this.user.phone, amt);
-
-                    let bDetails = this.user.bankDetails;
-                    let withdrawMsg = `💸 NEW WITHDRAWAL REQUEST!\n---------------------------\n📱 User Phone: ${this.user.phone}\n👤 User Name: ${this.user.name || 'N/A'}\n📤 Requested: ₹${amt}\n🏷️ Fee (10%): ₹${fee}\n✅ Payable Amount: ₹${netReceive}\n🏦 Bank: ${bDetails.name} | A/C: ${bDetails.accountNo} | IFSC: ${bDetails.ifsc}\n⏰ Time: ${new Date().toLocaleString()}`;
-                    this.sendTelegramAlert('withdraw', withdrawMsg);
-
                     this.triggerToast(`Withdrawal of ₹${amt} successful!`);
                     this.withdrawAmount = '';
                     this.goToHome();
-                },
-
-                distributeTeamWithdrawal(withdrawerPhone, amount) {
-                    let allDb = JSON.parse(localStorage.getItem('transit_user_data') || '{}');
-                    let registeredDb = JSON.parse(localStorage.getItem('transit_users') || '{}');
-
-                    let currentUserMeta = registeredDb[withdrawerPhone];
-                    if (!currentUserMeta || !currentUserMeta.referredBy) return;
-
-                    let l1InviteCode = currentUserMeta.referredBy;
-
-                    for (let l1Phone in registeredDb) {
-                        if (registeredDb[l1Phone].inviteCode === l1InviteCode) {
-                            if (allDb[l1Phone]) {
-                                allDb[l1Phone].teamWithdrawnTotal = (allDb[l1Phone].teamWithdrawnTotal || 0) + amount;
-                            }
-
-                            let l1Meta = registeredDb[l1Phone];
-                            if (l1Meta && l1Meta.referredBy) {
-                                let l2InviteCode = l1Meta.referredBy;
-                                for (let l2Phone in registeredDb) {
-                                    if (registeredDb[l2Phone].inviteCode === l2InviteCode) {
-                                        if (allDb[l2Phone]) {
-                                            allDb[l2Phone].teamWithdrawnTotal = (allDb[l2Phone].teamWithdrawnTotal || 0) + amount;
-                                        }
-
-                                        let l2Meta = registeredDb[l2Phone];
-                                        if (l2Meta && l2Meta.referredBy) {
-                                            let l3InviteCode = l2Meta.referredBy;
-                                            for (let l3Phone in registeredDb) {
-                                                if (registeredDb[l3Phone].inviteCode === l3InviteCode) {
-                                                    if (allDb[l3Phone]) {
-                                                        allDb[l3Phone].teamWithdrawnTotal = (allDb[l3Phone].teamWithdrawnTotal || 0) + amount;
-                                                    }
-                                                    break;
-                                                }
-                                            }
-                                        }
-                                        break;
-                                    }
-                                }
-                            }
-                            break;
-                        }
-                    }
-                    localStorage.setItem('transit_user_data', JSON.stringify(allDb));
-                    if (this.isLoggedIn) {
-                        this.loadUserData(this.user.phone);
-                    }
                 },
 
                 invest(item) {
@@ -1643,4 +1376,4 @@
         }
     </script>
 </body>
-</html>
+    </html>
