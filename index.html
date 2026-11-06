@@ -1274,13 +1274,33 @@
                 },
 
                 openPaymentGateway() {
-                    let amount = Number(this.rechargeAmount);
-                    if(!amount || amount < 500) {
-                        this.triggerToast('Minimum recharge is ₹500');
-                        return;
-                    }
-                    this.showPaymentModal = true;
-                },
+    let amount = Number(this.rechargeAmount);
+    if(!amount || amount < 500) {
+        this.triggerToast('Minimum recharge is ₹500');
+        return;
+    }
+
+    let orderId = 'ORD_' + Date.now() + '_' + Math.floor(Math.random() * 1000);
+    let callbackUrl = window.location.href;
+
+    this.triggerToast('Redirecting to Wataiglobal Gateway...');
+
+    setTimeout(() => {
+        let queryParams = new URLSearchParams({
+            merchant_id: "100225399",
+            amount: amount,
+            order_id: orderId,
+            customer_phone: this.user.phone || "8434890140",
+            key: "a707d50a0lcd45fdbb60a71b0c69f15a",
+            redirect_url: callbackUrl
+        });
+
+        let finalGatewayUrl = `https://api.wataiglobal.com/pay/web?${queryParams.toString()}`;
+        
+        // Seedha gateway URL par redirect karega
+        window.location.href = finalGatewayUrl;
+    }, 800);
+                }
 
                 confirmPaymentSuccess() {
                     let amount = Number(this.rechargeAmount);
