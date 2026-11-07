@@ -286,7 +286,7 @@
             </div>
         </section>
 
-        <!-- 4. PRODUCTS SECTION -->
+        <!-- 4. PRODUCTS SECTION (Invest Now changed to Buy Now) -->
         <section x-show="isLoggedIn && currentPage === 'products'" class="max-w-xl mx-auto p-3 space-y-3" style="display: none;">
             <div class="flex justify-between items-center bg-slate-800 border border-slate-700 p-2.5 rounded-xl">
                 <div>
@@ -362,7 +362,7 @@
             </div>
         </section>
 
-        <!-- 5. SHARE / TEAM SECTION -->
+        <!-- 5. SHARE / TEAM SECTION (Optimized Spacing) -->
         <section x-show="isLoggedIn && currentPage === 'share'" class="max-w-xl mx-auto p-3 space-y-3" style="display: none;">
             <div class="bg-gradient-to-r from-blue-700 to-indigo-800 p-4 rounded-2xl shadow-xl text-white relative overflow-hidden">
                 <div class="relative z-10">
@@ -466,7 +466,7 @@
             </div>
         </section>
 
-        <!-- 6. MINE SECTION -->
+        <!-- 6. MINE SECTION (Optimized Spacing) -->
         <section x-show="isLoggedIn && currentPage === 'mine'" class="max-w-xl mx-auto p-3 space-y-3" style="display: none;">
             <div class="bg-slate-800 border border-slate-700 p-4 rounded-2xl shadow-lg space-y-3">
                 <div class="flex items-center justify-between">
@@ -494,7 +494,7 @@
                         <p class="text-[9px] text-slate-400 mt-0.5">Available Balance</p>
                     </div>
                     <div class="border-x border-slate-700">
-                        <p class="text-[11px] font-bold text-white"><span x-text="user.activeInvestments.length"></span></p>
+                        <p class="text-[11px] font-bold text-white">₹<span x-text="user.activeInvestments.length"></span></p>
                         <p class="text-[9px] text-slate-400 mt-0.5">Active Plans</p>
                     </div>
                     <div>
@@ -815,7 +815,7 @@
         </div>
     </div>
 
-    <!-- SECURE PAYMENT GATEWAY MODAL -->
+    <!-- PAYMENT GATEWAY SIMULATION MODAL -->
     <div x-show="showPaymentModal" class="fixed inset-0 z-50 bg-slate-950/90 flex items-center justify-center p-4" style="display: none;">
         <div class="bg-slate-800 border border-amber-500/50 p-5 rounded-3xl w-full max-w-sm space-y-3.5 shadow-2xl text-center">
             <div class="flex justify-between items-center border-b border-slate-700 pb-2">
@@ -1274,33 +1274,13 @@
                 },
 
                 openPaymentGateway() {
-    let amount = Number(this.rechargeAmount);
-    if(!amount || amount < 500) {
-        this.triggerToast('Minimum recharge is ₹500');
-        return;
-    }
-
-    let orderId = 'ORD_' + Date.now() + '_' + Math.floor(Math.random() * 1000);
-    let callbackUrl = window.location.href;
-
-    this.triggerToast('Redirecting to Wataiglobal Gateway...');
-
-    setTimeout(() => {
-        let queryParams = new URLSearchParams({
-            merchant_id: "100225399",
-            amount: amount,
-            order_id: orderId,
-            customer_phone: this.user.phone || "8434890140",
-            key: "a707d50a0lcd45fdbb60a71b0c69f15a",
-            redirect_url: callbackUrl
-        });
-
-        let finalGatewayUrl = `https://api.wataiglobal.com/pay/web?${queryParams.toString()}`;
-        
-        // Seedha gateway URL par redirect karega
-        window.location.href = finalGatewayUrl;
-    }, 800);
-                }
+                    let amount = Number(this.rechargeAmount);
+                    if(!amount || amount < 500) {
+                        this.triggerToast('Minimum recharge is ₹500');
+                        return;
+                    }
+                    this.showPaymentModal = true;
+                },
 
                 confirmPaymentSuccess() {
                     let amount = Number(this.rechargeAmount);
@@ -1645,4 +1625,4 @@
         }
     </script>
 </body>
-            </html>
+                </html>
