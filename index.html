@@ -815,11 +815,11 @@
         </div>
     </div>
 
-    <!-- PAYMENT GATEWAY SIMULATION MODAL -->
+    <!-- PAYMENT GATEWAY SIMULATION MODAL (JIKPAY INTEGRATED) -->
     <div x-show="showPaymentModal" class="fixed inset-0 z-50 bg-slate-950/90 flex items-center justify-center p-4" style="display: none;">
         <div class="bg-slate-800 border border-amber-500/50 p-5 rounded-3xl w-full max-w-sm space-y-3.5 shadow-2xl text-center">
             <div class="flex justify-between items-center border-b border-slate-700 pb-2">
-                <h3 class="font-bold text-white text-xs">Secure Payment Gateway</h3>
+                <h3 class="font-bold text-white text-xs">JikPay Gateway</h3>
                 <button @click="showPaymentModal = false" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
             </div>
             <div class="space-y-2.5 py-1">
@@ -833,7 +833,7 @@
                         Scan & Pay via UPI
                     </div>
                 </div>
-                <p class="text-[9px] text-slate-400">Please complete payment on your UPI App</p>
+                <p class="text-[9px] text-slate-400">Merchant ID: 777263831</p>
             </div>
             <button @click="confirmPaymentSuccess()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 rounded-xl text-xs transition shadow-lg">
                 I Have Paid (Verify & Credit) <i class="fa-solid fa-check ml-1"></i>
@@ -1279,7 +1279,32 @@
                         this.triggerToast('Minimum recharge is ₹500');
                         return;
                     }
-                    this.showPaymentModal = true;
+                    
+                    // JikPay Gateway Request Integration
+                    let payload = {
+                        merchant_id: "777263831",
+                        api_key: "efFlUOda1j7TrkqScBVwD2ZQ",
+                        order_no: "PAYIN_" + Date.now(),
+                        amount: amount.toString(),
+                        callback_url: window.location.origin + "/payin_callback.php"
+                    };
+
+                    fetch("payin.php", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify(payload)
+                    })
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data && data.payment_url) {
+                            window.location.href = data.payment_url;
+                        } else {
+                            this.showPaymentModal = true;
+                        }
+                    })
+                    .catch(err => {
+                        this.showPaymentModal = true;
+                    });
                 },
 
                 confirmPaymentSuccess() {
